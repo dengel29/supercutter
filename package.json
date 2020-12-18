@@ -32,7 +32,9 @@
   "author": "Jakub Synowiec <github@jakubsynowiec.info>",
   "license": "Apache-2.0",
   "dependencies": {
-    "tslib": "~2.0.3"
+    "express": "^4.17.1",
+    "tslib": "~2.0.3",
+    "youtube-captions-scraper": "^1.0.3"
   },
   "volta": {
     "node": "14.15.0"
