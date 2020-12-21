@@ -1,12 +1,19 @@
 import { getSubtitles } from 'youtube-captions-scraper';
+import path from 'path';
 import express from 'express';
+import nunjucks from 'nunjucks';
 import axios from 'axios';
 import he from 'he';
 import striptags from 'striptags'
 
 
 const app = express()
-const port = 3000
+const port = 3000;
+nunjucks.configure(path.join(__dirname, 'views'), {
+  autoescape:  true,
+  express:  app,
+  watch: true
+});
 
 app.get('/v/:videoId', (req, res) => {
   console.log(req.params)
@@ -18,7 +25,7 @@ app.get('/v/:videoId', (req, res) => {
   });
 })
 
-app.get('/p/:videoId/:lang', async (req) => {
+app.get('/p/:videoId/:lang', async (req, res) => {
 
 
 type VideoString = {videoId: string, lang: string}
@@ -35,7 +42,14 @@ const decodedData: string = decodeURIComponent(data);
 
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match] = regex.exec(decodedData);
-  console.log(match)
+  const titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
+  const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ')
+  const thumbsRegex = /(?={"thumbnails":).*(?=,"averageRating)/;
+  const thumbsMatch: string = thumbsRegex.exec(decodedData)[0]
+  const thumbsObject: {thumbnails: [{url:string, width: number, height: number}]} = JSON.parse(thumbsMatch)
+  console.log(thumbsObject.thumbnails)
+  // console.log(thumbsMatch.thumbnails)
+  // const [titleMatch] = titleRegex.exec(decodedData);
   const { captionTracks } = JSON.parse(`${match}}`);
 
 /* captionTracks looks like this
@@ -85,7 +99,16 @@ const decodedData: string = decodeURIComponent(data);
         text,
       };
     });
+    const pageData = {
+      title: 'Subs for your video',
+      videoTitle: videoTitle,
+      subtitleLines: lines,
+      // https://www.youtube.com/watch?v=QPjhAZd1RLI&t=12304s
+      videoId: vs.videoId,
+      videoUrl: `https://www.youtube.com/watch?v=${vs.videoId}`
 
+    }
+    res.render('index.html', pageData)
     return lines;
   })
 

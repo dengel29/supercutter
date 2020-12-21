@@ -1,0 +1,16 @@
+<a href="{{videoUrl}}"> <h2> {{videoTitle}} </h2></a>
+
+{% for line in subtitleLines %}
+  <a href="https://www.youtube.com/watch?v={{videoId}}&t={{line.start}}s"> 
+  <p> {{line.start}} | {{line.text}}</p>
+  </a>
+
+  {# <iframe 
+    width="560" 
+    height="315" 
+    src="https://www.youtube.com/embed/QPjhAZd1RLI?start=" + {{line.start}} 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe> #}
+{% endfor %}
