@@ -64,7 +64,6 @@ const decodedData: string = decodeURIComponent(data);
     .split('</text>')
     .filter(line => line && line.trim())
     .map(line => {
-      console.log(line);
       const startRegex = /start="([\d.]+)"/;
       const durRegex = /dur="([\d.]+)"/;
 
