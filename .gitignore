@@ -6,6 +6,10 @@ npm-debug.log*
 # Dependencies
 node_modules/
 
+#video folders
+temp/
+cuts/
+
 # Coverage
 coverage
 
