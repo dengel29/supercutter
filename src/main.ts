@@ -18,6 +18,12 @@ nunjucks.configure(path.join(__dirname, 'views'), {
   watch: true
 });
 
+type CCBlock = {
+  start: number,
+  dur: number,
+  text: string,
+}
+
 // app.get('/v/:videoId', (req, res) => {
 //   console.log(req.params)
 //   getSubtitles({
@@ -31,6 +37,7 @@ nunjucks.configure(path.join(__dirname, 'views'), {
 app.get('/p/:videoId/:lang', async (req, res) => {
 
 
+// given the video URL or ID, get video info thumbnails, title, subtitles
 type VideoString = {videoId: string, lang: string}
 const vs: VideoString = {videoId: req.params.videoId, lang: req.params.lang}
 const { data } = await axios.get(
@@ -69,18 +76,12 @@ const { data } = await axios.get(
 ]
 */
   const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
-  type CCBlock = {
-    start: number,
-    dur: number,
-    text: string,
-  }
   // * ensure we have found the correct vidData lang
   if (!vidData || (vidData && !vidData.baseUrl))
-    throw new Error(`Could not find ${vs.lang} captions for ${vs.videoId}`);
-
+  throw new Error(`Could not find ${vs.lang} captions for ${vs.videoId}`);
 
     const { data: transcript } = await axios.get(vidData.baseUrl);
-    let lines: Array<CCBlock> = transcript
+    const lines: Array<CCBlock> = transcript
     .replace('<?xml version="1.0" encoding="utf-8" ?><transcript>', '')
     .replace('</transcript>', '')
     .split('</text>')
@@ -107,7 +108,39 @@ const { data } = await axios.get(
         text,
       };
     });
-    lines = lines.filter(line => line.text.includes('bounce'))
+    
+    // create video and audio cut instructions for ffmpeg based on search word
+    const keyword = 'greatest'
+    const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, keyword)
+    
+
+    if (download) {
+      await downloadFile(`https://www.youtube.com/watch?v=${vs.videoId}`)
+      const tempPath = './temp/temp.mp4'
+      const permPath = `./temp/${videoTitle}.mp4`
+      rename(tempPath, permPath, async () => {
+        console.log('renamed the shit, start cutting the video')
+        await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
+      });
+    }
+   
+    const pageData = {
+      title: 'Subs for your video',
+      videoTitle: videoTitle,
+      subtitleLines: lines,
+      thumbs: thumbnails,
+      videoId: vs.videoId,
+      videoUrl: `https://www.youtube.com/watch?v=${vs.videoId}`
+
+    }
+    
+    
+    res.render('index.html', pageData)
+    return lines;
+  })
+
+  function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutInstructions: string, audioCutInstructions: string } {
+    lines = lines.filter(line => line.text.includes(keyword))
     let videoCutInstructions = "select='"
     let audioCutInstructions = "aselect='"
     for (const line of lines) {
@@ -121,32 +154,8 @@ const { data } = await axios.get(
     audioCutInstructions = audioCutInstructions.slice(0, -1).concat('\', asetpts=\'N/SR/TB\'');
     console.log(videoCutInstructions)
     console.log(audioCutInstructions)
-    const pageData = {
-      title: 'Subs for your video',
-      videoTitle: videoTitle,
-      subtitleLines: lines,
-      thumbs: thumbnails,
-      videoId: vs.videoId,
-      videoUrl: `https://www.youtube.com/watch?v=${vs.videoId}`
-
-    }
-    
-    if (download) {
-
-      await downloadFile(`https://www.youtube.com/watch?v=${vs.videoId}`)
-      const tempPath = './temp/temp.mp4'
-      const permPath = `./temp/${videoTitle}.mp4`
-      rename(tempPath, permPath, async () => {
-        console.log('renamed the shit, no going to cut the video')
-        await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
-      });
-    }
-    
-    res.render('index.html', pageData)
-    return lines;
-  })
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
+    return {videoCutInstructions: videoCutInstructions, audioCutInstructions: audioCutInstructions}
+  }
   async function downloadFile(downloadURL: string) {
     return new Promise( (resolve, reject) => {
       const stream = fs.createWriteStream('./temp/temp.mp4')
@@ -157,15 +166,14 @@ const { data } = await axios.get(
   }
 
   /* 
-  translate this to the fluent-ffmpeg 
-  ffmpeg -i video \
-      -vf "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
-          setpts=N/FRAME_RATE/TB" \
-      -af "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
-          asetpts=N/SR/TB" out.mp4
-  source: https://stackoverflow.com/questions/50594412/cut-multiple-parts-of-a-video-with-ffmpeg
+    translate this to the fluent-ffmpeg 
+    ffmpeg -i video \
+        -vf "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
+            setpts=N/FRAME_RATE/TB" \
+        -af "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
+            asetpts=N/SR/TB" out.mp4
+    source: https://stackoverflow.com/questions/50594412/cut-multiple-parts-of-a-video-with-ffmpeg
   */
- 
   async function cutVideo(videoPath: string, videoCutInstructions: string, audioCutInstructions: string) {
     console.log("Inside cutvideo function", videoPath)
     // working harcoded version, for reference
@@ -187,8 +195,6 @@ const { data } = await axios.get(
       .on('error', (err) => console.error(err))
       .save('./cuts/trimmed.mp4')
   }
-
-// }
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
