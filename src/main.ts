@@ -8,12 +8,18 @@ import striptags from 'striptags'
 import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
 
-
 const download = false;
+
 const app = express()
 const port = 3000;
-app.use(express.static(path.join('build', 'src')));
 
+// middleware
+app.use(express.static(path.join('build', 'src')));
+app.use(express.urlencoded({
+  extended: true
+}))
+
+// nunjucks template config
 nunjucks.configure(path.join(__dirname, 'views'), {
   autoescape:  true,
   express:  app,
@@ -45,14 +51,29 @@ async function getVideoInfo(url:string): Promise<string> {
   return decodeURIComponent(data);
 }
 
+app.get('/p/', async (req, res) => {
+  console.log(req)
+
+  res.render('index.njk')
+})
+
+app.post('/search-video', async (req,res) => {
+  const userInput: string = req.body.videoData;
+  const videoID: string = ytdl.getVideoID(userInput)
+  console.log(userInput)
+  console.log(videoID)
+  
+  // const videoExists = req.body.username
+  //...
+  res.end()
+})
+
 app.get('/p/:videoId/:lang', async (req, res) => {
 
 
 // given the video URL or ID, get video info thumbnails, title, subtitles
   const vs: VideoRequestString = {videoId: req.params.videoId, lang: req.params.lang}
   const decodedData = await getVideoInfo(vs.videoId)
-
-
   // ensure the decoded data has the captionTracks info
   if (!decodedData.includes('captionTracks'))
     throw new Error(`Could not find captions for video: ${vs.videoId}`);

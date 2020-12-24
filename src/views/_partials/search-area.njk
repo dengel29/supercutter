@@ -1,10 +1,16 @@
 <div class="wrapper">
-  <div class="search-group">
-    <label for="youtube-video">Enter a video ID or URL</label>
-    <input type="text">
-  </div>
+<fieldset>
+  <legend> Find a video then search for a term</legend>
+  <form method="post" action="/search-video" >
+    <div class="search-group">
+      <label for="youtube-video">Enter a video ID or URL</label>
+      <input type="text" name="videoData">
+      <input type="submit" value="Find the video">
+    </div>
+  </form>
   <div class="search-group">
     <label for="search-term">What word do you want to supercut</label>
     <input type="text">
   </div>
+</fieldset>
 </div>
