@@ -3,9 +3,35 @@
   <head>
     <title>{{ title }}</title>
     <link rel="stylesheet" href="/styles/styling.css">
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
   </head>
   <body>
     {% block  content %}
     {% endblock %}
+    <script>
+      function videoSearch() {
+        return {
+          videoFound: false,
+          isLoading: false,
+          videoURLOrID: '',
+          video: null,
+          subtitles: null,
+          searchYoutube() {
+            this.isLoading = true;
+            //let form = new FormData();
+            //form.append("videoURLOrID", this.videoURLOrID)
+            // user?name=tom
+            fetch(`http://localhost:3000/search-video/${this.videoURLOrID}`, {
+              method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+              this.isLoading = false;
+              this.videoFound = data.found === 'true' ? true : false
+            })   
+          }
+        }
+      }
+    </script>
   </body>
 </html>

@@ -51,21 +51,22 @@ async function getVideoInfo(url:string): Promise<string> {
   return decodeURIComponent(data);
 }
 
-app.get('/p/', async (req, res) => {
-  console.log(req)
-
+app.get('/p/', async (_, res) => {
   res.render('index.njk')
 })
 
-app.post('/search-video', async (req,res) => {
-  const userInput: string = req.body.videoData;
-  const videoID: string = ytdl.getVideoID(userInput)
-  console.log(userInput)
-  console.log(videoID)
-  
-  // const videoExists = req.body.username
-  //...
-  res.end()
+app.post('/search-video/:videoURLOrID', async (req,res) => {
+  console.log(req.params)
+  const userInput: string = req.params.videoURLOrID;
+  try {
+    const videoID: string = ytdl.getVideoID(userInput)
+    console.log(userInput)
+    console.log(videoID)
+    res.send(JSON.stringify({found: 'true'}))
+  } catch(err) {
+    if (err == `No video id found: ${userInput}`)
+    res.send(JSON.stringify({message: "Please enter a youtube video ID or a full YouTube URL"}))
+  }
 })
 
 app.get('/p/:videoId/:lang', async (req, res) => {

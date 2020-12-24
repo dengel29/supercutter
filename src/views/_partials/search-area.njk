@@ -1,16 +1,26 @@
 <div class="wrapper">
-<fieldset>
-  <legend> Find a video then search for a term</legend>
-  <form method="post" action="/search-video" >
+  <div x-data="videoSearch()">
+    <h3>Find a video then search for a term</h3>
+      <div class="search-group">
+        <label for="youtube-video">Enter a video ID or URL</label>
+        <input 
+          type="text" 
+          name="videoURLOrID"
+          x-model="videoURLOrID">
+        <button 
+          type="submit"
+          @click="searchYoutube"
+          :disabled="isLoading"
+          >
+          Find the video
+        </button>
+      </div>
     <div class="search-group">
-      <label for="youtube-video">Enter a video ID or URL</label>
-      <input type="text" name="videoData">
-      <input type="submit" value="Find the video">
+      <label for="search-term">What word do you want to supercut</label>
+      <input type="text">
     </div>
-  </form>
-  <div class="search-group">
-    <label for="search-term">What word do you want to supercut</label>
-    <input type="text">
+    <template x-if="videoFound">
+      <h2 x-text="videoFound"></h2>
+    </template>
   </div>
-</fieldset>
 </div>
