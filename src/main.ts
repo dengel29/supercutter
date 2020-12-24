@@ -9,9 +9,11 @@ import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
 
 
-const download = true;
+const download = false;
 const app = express()
 const port = 3000;
+app.use(express.static(path.join('build', 'src')));
+
 nunjucks.configure(path.join(__dirname, 'views'), {
   autoescape:  true,
   express:  app,
@@ -33,55 +35,100 @@ type CCBlock = {
 //     res.send(captions)
 //   });
 // })
+type VideoRequestString = {videoId: string, lang: string}
+
+async function getVideoInfo(url:string): Promise<string> {
+  const { data } = await axios.get(
+  `https://youtube.com/get_video_info?video_id=${url}`
+);
+
+  return decodeURIComponent(data);
+}
 
 app.get('/p/:videoId/:lang', async (req, res) => {
 
 
 // given the video URL or ID, get video info thumbnails, title, subtitles
-type VideoString = {videoId: string, lang: string}
-const vs: VideoString = {videoId: req.params.videoId, lang: req.params.lang}
-const { data } = await axios.get(
-  `https://youtube.com/get_video_info?video_id=${vs.videoId}`
-);
+  const vs: VideoRequestString = {videoId: req.params.videoId, lang: req.params.lang}
+  const decodedData = await getVideoInfo(vs.videoId)
 
-  const decodedData: string = decodeURIComponent(data);
-  // * ensure we have access to captions data
+
+  // ensure the decoded data has the captionTracks info
   if (!decodedData.includes('captionTracks'))
     throw new Error(`Could not find captions for video: ${vs.videoId}`);
-
+  /* captionTracks looks like this
+  [
+    {
+      baseUrl: 'https://www.youtube.com/api/timedtext?v=QPjhAZd1RLI&asr_langs=de,en,es,fr,it,ja,ko,nl,pt,ru&caps=asr&exp=xftt&xorp=true&xoaf=5&hl=zh-TW&ip=0.0.0.0&ipbits=0&expire=1608306851&sparams=ip,ipbits,expire,v,asr_langs,caps,exp,xorp,xoaf&signature=C6D2F64D9325491770F7F63CBC02E4587DC243A3.EB016D9708A28DDECF08A80ECE640018816F0F4C&key=yt8&kind=asr&lang=en',
+      name: { simpleText: '英文+(自動產生)' },
+      vssId: 'a.en',
+      languageCode: 'en',
+      kind: 'asr',
+      isTranslatable: true
+    }
+  ]
+  */
+  
+  // get caption tracks or throw an error
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match]: RegExpExecArray = regex.exec(decodedData);
+  const { captionTracks } = JSON.parse(`${match}}`);
+  const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
+  // * ensure we have found the correct vidData lang
+  if (!vidData || (vidData && !vidData.baseUrl))
+    throw new Error(`Could not find ${vs.lang} captions for ${vs.videoId}`);
+
+
+  // get other video data after we know we can get captions
+  //// title
   const titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
   const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
+  
+  //// thumbnails
   const thumbsRegex = /(?={"thumbnails":).*(?=,"averageRating)/;
   const [thumbsMatch]: RegExpExecArray = thumbsRegex.exec(decodedData)
-
   type ThumbsObject = {thumbnails: [{url:string, width: number, height: number}]}
   const thumbsObj: ThumbsObject = JSON.parse(thumbsMatch)
   const thumbnails = thumbsObj.thumbnails
   // console.log(thumbsMatch.thumbnails)
   // const [titleMatch] = titleRegex.exec(decodedData);
-  const { captionTracks } = JSON.parse(`${match}}`);
 
-/* captionTracks looks like this
-[
-  {
-    baseUrl: 'https://www.youtube.com/api/timedtext?v=QPjhAZd1RLI&asr_langs=de,en,es,fr,it,ja,ko,nl,pt,ru&caps=asr&exp=xftt&xorp=true&xoaf=5&hl=zh-TW&ip=0.0.0.0&ipbits=0&expire=1608306851&sparams=ip,ipbits,expire,v,asr_langs,caps,exp,xorp,xoaf&signature=C6D2F64D9325491770F7F63CBC02E4587DC243A3.EB016D9708A28DDECF08A80ECE640018816F0F4C&key=yt8&kind=asr&lang=en',
-    name: { simpleText: '英文+(自動產生)' },
-    vssId: 'a.en',
-    languageCode: 'en',
-    kind: 'asr',
-    isTranslatable: true
+  // convert XML transcript into an array of CCBlocks
+  const lines: Array<CCBlock> = await getTranscript(vidData.baseUrl)
+  
+  // create video and audio cut instructions for ffmpeg based on search word
+  
+  
+  if (download) {
+    const keyword = 'greatest'
+    const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, keyword)
+    await downloadFile(`https://www.youtube.com/watch?v=${vs.videoId}`)
+    const tempPath = './temp/temp.mp4'
+    const permPath = `./temp/${videoTitle}.mp4`
+    rename(tempPath, permPath, async () => {
+      console.log('renamed the shit, start cutting the video')
+      await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
+    });
   }
-]
-*/
-  const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
-  // * ensure we have found the correct vidData lang
-  if (!vidData || (vidData && !vidData.baseUrl))
-  throw new Error(`Could not find ${vs.lang} captions for ${vs.videoId}`);
+  
+  const pageData = {
+    title: 'Subs for your video',
+    videoTitle: videoTitle,
+    subtitleLines: lines,
+    thumbs: thumbnails,
+    videoId: vs.videoId,
+    videoUrl: `https://www.youtube.com/watch?v=${vs.videoId}`
 
-    const { data: transcript } = await axios.get(vidData.baseUrl);
-    const lines: Array<CCBlock> = transcript
+  }
+    
+    
+    res.render('index.njk', pageData)
+    return lines;
+  })
+
+  async function getTranscript(videoDataURL: string): Promise<Array<CCBlock>> {
+    const { data: transcript } = await axios.get(videoDataURL);
+    return transcript
     .replace('<?xml version="1.0" encoding="utf-8" ?><transcript>', '')
     .replace('</transcript>', '')
     .split('</text>')
@@ -108,36 +155,7 @@ const { data } = await axios.get(
         text,
       };
     });
-    
-    // create video and audio cut instructions for ffmpeg based on search word
-    const keyword = 'greatest'
-    const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, keyword)
-    
-
-    if (download) {
-      await downloadFile(`https://www.youtube.com/watch?v=${vs.videoId}`)
-      const tempPath = './temp/temp.mp4'
-      const permPath = `./temp/${videoTitle}.mp4`
-      rename(tempPath, permPath, async () => {
-        console.log('renamed the shit, start cutting the video')
-        await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
-      });
-    }
-   
-    const pageData = {
-      title: 'Subs for your video',
-      videoTitle: videoTitle,
-      subtitleLines: lines,
-      thumbs: thumbnails,
-      videoId: vs.videoId,
-      videoUrl: `https://www.youtube.com/watch?v=${vs.videoId}`
-
-    }
-    
-    
-    res.render('index.html', pageData)
-    return lines;
-  })
+  }
 
   function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutInstructions: string, audioCutInstructions: string } {
     lines = lines.filter(line => line.text.includes(keyword))
@@ -156,6 +174,7 @@ const { data } = await axios.get(
     console.log(audioCutInstructions)
     return {videoCutInstructions: videoCutInstructions, audioCutInstructions: audioCutInstructions}
   }
+
   async function downloadFile(downloadURL: string) {
     return new Promise( (resolve, reject) => {
       const stream = fs.createWriteStream('./temp/temp.mp4')

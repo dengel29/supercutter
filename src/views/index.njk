@@ -1,0 +1,19 @@
+{% extends "layout.njk" %}
+{% block  content %}
+<div class="content-grid">
+  <div style="display: flex; flex-direction: column; justify-content: center;">
+    {% include "../views/_partials/search-area.njk" %}
+    
+
+    <a href="{{videoUrl}}"> <h2> {{videoTitle}} </h2></a>
+    <img src="{{thumbs[0].url}}" width="{{thumbs[0].width}}" height="{{thumbs[0].height}}" alt="">
+  </div>
+  <div class="subtitles">
+    {% for line in subtitleLines %}
+      <a href="https://www.youtube.com/watch?v={{videoId}}&t={{line.start}}s"> 
+      <p> {{line.start}} | {{line.text}}</p>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
