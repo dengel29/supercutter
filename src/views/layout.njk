@@ -20,6 +20,7 @@
           videoURLOrID: '',
           video: null,
           filteredCaptions: null,
+          sendableCaptions: '',
           searchYoutube() {
             // send the ID or URL to see if the video exists;
             // returns to client subtitles if it does exist;
@@ -48,11 +49,25 @@
           filterCaptions() {
             // filter captions that have already been returned;
             this.filteredCaptions = this.videoData.captions.filter(line => line.text.includes(this.filterWord))
+
           },
+          
           downloadVideo() {
+            let body = {body: this.filteredCaptions}
+            
+            // vsY0pdCW9N0
             // send the filtered captions to create the supercut;
             // TODO return a link to video download
+
+            fetch(`http://localhost:3000/download/${this.videoData.videoID}/${this.videoData.videoTitle}/${this.filterWord}`, {
+              method: 'POST',
+              body: JSON.stringify(body),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
           }
+          
         }
       }
     </script>
