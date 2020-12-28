@@ -25,15 +25,18 @@
         type="submit"
         @click="filterCaptions"
         :disabled="!videoFound"
-        >Filter captions</button
+        >Filter captions</button>
     </div>
+    <button
+        @click="downloadVideo"
+        >Bounce that boy</button>
     <template x-if="videoSearchError">
       <h2 x-text="videoSearchError"></h2>
     </template>
     <template x-if="videoData">
       <div class="subtitles">
-      <h2 x-text="'Subs for ' + videoData.videoTitle"></h2>
-      <img :src="videoData.thumbs[0].url" :width="videoData.thumbs[0].width" alt="">
+        <h2 x-text="'Subs for ' + videoData.videoTitle"></h2>
+        <img :src="videoData.thumbs[0].url" :width="videoData.thumbs[0].width" alt="">
         <template
           x-for="caption in filteredCaptions"
           :key="caption.start"
@@ -44,6 +47,6 @@
           x-text="caption.start + ' | ' + caption.text"></a>
         </template>
       </div>
-      </template
+    </template>
   </div>
 </div>

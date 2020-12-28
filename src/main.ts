@@ -7,11 +7,11 @@ import he from 'he';
 import striptags from 'striptags'
 import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
-
-// const download = false;
+import bodyParser from 'body-parser';
 
 const app = express()
 const port = 3000;
+const jsonParser = bodyParser.json()
 
 // middleware
 app.use(express.static(path.join('build', 'src')));
@@ -32,15 +32,6 @@ type CCBlock = {
   text: string,
 }
 
-// app.get('/v/:videoId', (req, res) => {
-//   console.log(req.params)
-//   getSubtitles({
-//     videoID: req.params.videoId, // youtube video id
-//     lang: 'en' // default: `en`
-//   }).then((captions: JSON) => {
-//     res.send(captions)
-//   });
-// })
 type VideoRequestString = {videoID: string, lang: string}
 
 async function getDecodedVideoInfo(url:string): Promise<string> {
@@ -69,8 +60,6 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
 })
 
 app.get('/p/:videoId/:lang', async (req, res) => {
-
-
 // given the video URL or ID, get video info thumbnails, title, captions
   const vs: VideoRequestString = {videoID: req.params.videoID, lang: req.params.lang}
   const decodedData = await getDecodedVideoInfo(vs.videoID)
@@ -225,96 +214,118 @@ async function getVideoData(videoID: string, lang = 'en') {
 }
 
 
-  async function getTranscript(videoDataURL: string): Promise<Array<CCBlock>> {
-    const { data: transcript } = await axios.get(videoDataURL);
-    return transcript
-    .replace('<?xml version="1.0" encoding="utf-8" ?><transcript>', '')
-    .replace('</transcript>', '')
-    .split('</text>')
-    .filter(line => line && line.trim())
-    .map(line => {
-      const startRegex = /start="([\d.]+)"/;
-      const durRegex = /dur="([\d.]+)"/;
+async function getTranscript(videoDataURL: string): Promise<Array<CCBlock>> {
+  const { data: transcript } = await axios.get(videoDataURL);
+  return transcript
+  .replace('<?xml version="1.0" encoding="utf-8" ?><transcript>', '')
+  .replace('</transcript>', '')
+  .split('</text>')
+  .filter(line => line && line.trim())
+  .map(line => {
+    const startRegex = /start="([\d.]+)"/;
+    const durRegex = /dur="([\d.]+)"/;
 
-      const [, start] = startRegex.exec(line);
-      const [, dur] = durRegex.exec(line);
+    const [, start] = startRegex.exec(line);
+    const [, dur] = durRegex.exec(line);
 
-      const htmlText = line
-      .replace(/<text.+>/, '')
-      .replace(/&amp;/gi, '&')
-      .replace(/&amp;#39;/gi, "'")
-      .replace(/<\/?[^>]+(>|$)/g, '');
+    const htmlText = line
+    .replace(/<text.+>/, '')
+    .replace(/&amp;/gi, '&')
+    .replace(/&amp;#39;/gi, "'")
+    .replace(/<\/?[^>]+(>|$)/g, '');
 
-      const decodedText = he.decode(htmlText);
-      const text = striptags(decodedText);
+    const decodedText = he.decode(htmlText);
+    const text = striptags(decodedText);
 
-      return {
-        start,
-        dur,
-        text,
-      };
+    return {
+      start,
+      dur,
+      text,
+    };
+  });
+}
+
+app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (req, res) {
+  try {
+    console.log(req.params)
+    const filterWord = req.params.filterWord;
+    const title = req.params.title;
+    const videoID = req.params.videoID;
+    const lines: CCBlock[] = req.body.body
+    const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, filterWord)
+    await downloadFile(`https://www.youtube.com/watch?v=${videoID}`)
+    const tempPath = './temp/temp.mp4'
+    const permPath = `./temp/${title}.mp4`
+    rename(tempPath, permPath, async () => {
+      console.log('renamed the shit, start cutting the video')
+      await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
     });
+  } catch(err) {
+    console.log(err)  
   }
 
-  function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutInstructions: string, audioCutInstructions: string } {
-    lines = lines.filter(line => line.text.includes(keyword))
-    let videoCutInstructions = "select='"
-    let audioCutInstructions = "aselect='"
-    for (const line of lines) {
-      //select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)
-      const timesString = `between(t,${line.start},${Number(line.start)+Number(line.dur)})+`
-      videoCutInstructions = videoCutInstructions.concat(timesString)
-      audioCutInstructions = audioCutInstructions.concat(timesString)
+  res.end()
+})
 
-    }
-    videoCutInstructions = videoCutInstructions.slice(0, -1).concat('\', setpts=N/FRAME_RATE/TB');
-    audioCutInstructions = audioCutInstructions.slice(0, -1).concat('\', asetpts=\'N/SR/TB\'');
-    console.log(videoCutInstructions)
-    console.log(audioCutInstructions)
-    return {videoCutInstructions: videoCutInstructions, audioCutInstructions: audioCutInstructions}
+function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutInstructions: string, audioCutInstructions: string } {
+  lines = lines.filter(line => line.text.includes(keyword))
+  let videoCutInstructions = "select='"
+  let audioCutInstructions = "aselect='"
+  for (const line of lines) {
+    //select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)
+    const timesString = `between(t,${line.start},${Number(line.start)+Number(line.dur)})+`
+    videoCutInstructions = videoCutInstructions.concat(timesString)
+    audioCutInstructions = audioCutInstructions.concat(timesString)
+
   }
+  videoCutInstructions = videoCutInstructions.slice(0, -1).concat('\', setpts=N/FRAME_RATE/TB');
+  audioCutInstructions = audioCutInstructions.slice(0, -1).concat('\', asetpts=\'N/SR/TB\'');
+  console.log(videoCutInstructions)
+  console.log(audioCutInstructions)
+  return {videoCutInstructions: videoCutInstructions, audioCutInstructions: audioCutInstructions}
+}
 
-  async function downloadFile(downloadURL: string) {
-    return new Promise( (resolve, reject) => {
-      const stream = fs.createWriteStream('./temp/temp.mp4')
-      ytdl(downloadURL).pipe(stream)
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-    })
-  }
+async function downloadFile(downloadURL: string) {
+  return new Promise( (resolve, reject) => {
+    const stream = fs.createWriteStream('./temp/temp.mp4')
+    ytdl(downloadURL).pipe(stream)
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+  })
+}
 
+/* 
+  translate this to the fluent-ffmpeg 
+  ffmpeg -i video \
+      -vf "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
+          setpts=N/FRAME_RATE/TB" \
+      -af "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
+          asetpts=N/SR/TB" out.mp4
+  source: https://stackoverflow.com/questions/50594412/cut-multiple-parts-of-a-video-with-ffmpeg
+*/
+async function cutVideo(videoPath: string, videoCutInstructions: string, audioCutInstructions: string) {
+  console.log("Inside cutvideo function", videoPath) 
   /* 
-    translate this to the fluent-ffmpeg 
-    ffmpeg -i video \
-        -vf "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
-            setpts=N/FRAME_RATE/TB" \
-        -af "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
-            asetpts=N/SR/TB" out.mp4
-    source: https://stackoverflow.com/questions/50594412/cut-multiple-parts-of-a-video-with-ffmpeg
-  */
-  async function cutVideo(videoPath: string, videoCutInstructions: string, audioCutInstructions: string) {
-    console.log("Inside cutvideo function", videoPath)
-    /* 
-      working harcoded version, for reference
-      ffmpeg(videoPath)
-        .outputOptions(
-          "-vf", "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)', setpts=N/FRAME_RATE/TB", 
-          "-af", "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)', asetpts='N/SR/TB'"
-        )
-        .on('end', () => console.log("we've done it"))
-        .on('error', (err) => console.error(err))
-        .save('./cuts/trimmed.mp4')
-    */
-    
+    working harcoded version, for reference
     ffmpeg(videoPath)
       .outputOptions(
-        "-vf", `${videoCutInstructions}`, 
-        "-af", `${audioCutInstructions}`
+        "-vf", "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)', setpts=N/FRAME_RATE/TB", 
+        "-af", "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)', asetpts='N/SR/TB'"
       )
       .on('end', () => console.log("we've done it"))
       .on('error', (err) => console.error(err))
       .save('./cuts/trimmed.mp4')
-  }
+  */
+  
+  ffmpeg(videoPath)
+    .outputOptions(
+      "-vf", `${videoCutInstructions}`, 
+      "-af", `${audioCutInstructions}`
+    )
+    .on('end', () => console.log("we've done it"))
+    .on('error', (err) => console.error(err))
+    .save('./cuts/trimmed.mp4')
+}
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
