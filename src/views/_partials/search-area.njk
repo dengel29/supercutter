@@ -1,0 +1,49 @@
+<div class="wrapper">
+  <div x-data="videoSearch()">
+    <h3>Find a video then search for a term</h3>
+      <div class="search-group">
+        <label for="youtube-video">Enter a video ID or URL</label>
+        <input 
+          type="text" 
+          name="videoURLOrID"
+          x-model="videoURLOrID">
+        <button 
+          type="submit"
+          @click="searchYoutube"
+          :disabled="isLoading || videoURLOrID == ''"
+          >
+          Find the video
+        </button>
+      </div>
+    <div class="search-group">
+      <label for="search-term">What word do you want to supercut</label>
+      <input 
+        type="text"
+        name="filterWord"
+        x-model="filterWord">
+      <button 
+        type="submit"
+        @click="filterCaptions"
+        :disabled="!videoFound"
+        >Filter captions</button
+    </div>
+    <template x-if="videoSearchError">
+      <h2 x-text="videoSearchError"></h2>
+    </template>
+    <template x-if="videoData">
+      <div class="subtitles">
+      <h2 x-text="'Subs for ' + videoData.videoTitle"></h2>
+      <img :src="videoData.thumbs[0].url" :width="videoData.thumbs[0].width" alt="">
+        <template
+          x-for="caption in filteredCaptions"
+          :key="caption.start"
+        > 
+        <a 
+          id="caption.start"
+          :href="'https://www.youtube.com/watch?v=' + videoData.videoID + '&t=' + caption.start + 's'"
+          x-text="caption.start + ' | ' + caption.text"></a>
+        </template>
+      </div>
+      </template
+  </div>
+</div>
