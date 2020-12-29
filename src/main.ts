@@ -8,6 +8,27 @@ import striptags from 'striptags'
 import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
 import bodyParser from 'body-parser';
+import {s3} from './s3-config';
+
+
+const BUCKET_NAME = 'supercuts'
+
+const uploadToS3 = (fileName) => {
+  const fileContent = fs.readFileSync(fileName);
+  const params = {
+    Bucket: BUCKET_NAME,
+    Key: 'supercut.mp4', // File name you want to save as in S3
+    Body: fileContent,
+    ACL:'public-read'
+  };
+  s3.upload(params, function(err, data) {
+    if (err) {
+        throw err;
+    }
+    console.log(`File uploaded successfully. ${data.Location}`);
+  });
+}
+
 
 const app = express()
 const port = 3000;
@@ -264,7 +285,7 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     console.log(err)  
   }
 
-  res.end()
+  res.end() 
 })
 
 function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutInstructions: string, audioCutInstructions: string } {
