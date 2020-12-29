@@ -13,20 +13,34 @@ import {s3} from './s3-config';
 
 const BUCKET_NAME = 'supercuts'
 
-const uploadToS3 = (fileName) => {
-  const fileContent = fs.readFileSync(fileName);
+type S3UploadResult = {
+  success: boolean,
+  value: string
+}
+const uploadToS3 = async (filePath: string): Promise<S3UploadResult> => {
+  const fileContent = fs.readFileSync(filePath);
   const params = {
     Bucket: BUCKET_NAME,
     Key: 'supercut.mp4', // File name you want to save as in S3
     Body: fileContent,
     ACL:'public-read'
   };
+  let uploadOutcome: S3UploadResult
   s3.upload(params, function(err, data) {
     if (err) {
-        throw err;
+      uploadOutcome = {
+        success: false, 
+        value: err.message
+      }
+    } else {
+      console.log(`File uploaded successfully. ${data.Location}`);
+      uploadOutcome = {
+        success: true,
+        value: data.location
+      }
     }
-    console.log(`File uploaded successfully. ${data.Location}`);
   });
+  return uploadOutcome;
 }
 
 
