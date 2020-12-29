@@ -17,30 +17,33 @@ type S3UploadResult = {
   success: boolean,
   value: string
 }
-const uploadToS3 = async (filePath: string): Promise<S3UploadResult> => {
+const uploadToS3 = async (filePath:string): Promise<S3UploadResult> => {
   const fileContent = fs.readFileSync(filePath);
+  const title = filePath.replace(/.\/cuts/, '').replace(/[/|\s|-]/g, '-')
   const params = {
     Bucket: BUCKET_NAME,
-    Key: 'supercut.mp4', // File name you want to save as in S3
+    Key: title, // File name you want to save as in S3
     Body: fileContent,
     ACL:'public-read'
   };
   let uploadOutcome: S3UploadResult
-  s3.upload(params, function(err, data) {
-    if (err) {
-      uploadOutcome = {
-        success: false, 
-        value: err.message
-      }
-    } else {
-      console.log(`File uploaded successfully. ${data.Location}`);
-      uploadOutcome = {
-        success: true,
-        value: data.location
-      }
+  const upload = s3.upload(params)
+  return upload.promise().then(data => {
+    console.log(`File uploaded successfully. ${data.Location}`);
+    uploadOutcome = {
+      success: true,
+      value: data.Location
     }
-  });
-  return uploadOutcome;
+    console.log(uploadOutcome)
+    return uploadOutcome
+  }, err => {
+    uploadOutcome = {
+      success: false, 
+      value: err.message
+    }
+    console.log(uploadOutcome)
+    return uploadOutcome
+  })
 }
 
 
@@ -94,87 +97,7 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
   }
 })
 
-app.get('/p/:videoId/:lang', async (req, res) => {
-// given the video URL or ID, get video info thumbnails, title, captions
-  const vs: VideoRequestString = {videoID: req.params.videoID, lang: req.params.lang}
-  const decodedData = await getDecodedVideoInfo(vs.videoID)
-  // ensure the decoded data has the captionTracks info
-  if (!decodedData.includes('captionTracks'))
-    throw new Error(`Could not find captions for video: ${vs.videoID}`);
-
-  /* captionTracks look like this: 
-    captionTracks looks like this
-    [
-      {
-        baseUrl: 'https://www.youtube.com/api/timedtext?v=QPjhAZd1RLI&asr_langs=de,en,es,fr,it,ja,ko,nl,pt,ru&caps=asr&exp=xftt&xorp=true&xoaf=5&hl=zh-TW&ip=0.0.0.0&ipbits=0&expire=1608306851&sparams=ip,ipbits,expire,v,asr_langs,caps,exp,xorp,xoaf&signature=C6D2F64D9325491770F7F63CBC02E4587DC243A3.EB016D9708A28DDECF08A80ECE640018816F0F4C&key=yt8&kind=asr&lang=en',
-        name: { simpleText: '英文+(自動產生)' },
-        vssId: 'a.en',
-        languageCode: 'en',
-        kind: 'asr',
-        isTranslatable: true
-      }
-    ]
-  */
-  
-  // get caption tracks or throw an error
-  const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
-  const [match]: RegExpExecArray = regex.exec(decodedData);
-  const { captionTracks } = JSON.parse(`${match}}`);
-  const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
-  // * ensure we have found the correct vidData lang
-  if (!vidData || (vidData && !vidData.baseUrl))
-    throw new Error(`Could not find ${vs.lang} captions for ${vs.videoID}`);
-
-
-  // get other video data after we know we can get captions
-  //// title
-  const titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
-  const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
-  
-  //// thumbnails
-  const thumbsRegex = /(?={"thumbnails":).*(?=,"averageRating)/;
-  const [thumbsMatch]: RegExpExecArray = thumbsRegex.exec(decodedData)
-  type ThumbsObject = {thumbnails: [{url:string, width: number, height: number}]}
-  const thumbsObj: ThumbsObject = JSON.parse(thumbsMatch)
-  const thumbnails = thumbsObj.thumbnails
-  // console.log(thumbsMatch.thumbnails)
-  // const [titleMatch] = titleRegex.exec(decodedData);
-
-  // convert XML transcript into an array of CCBlocks
-  const lines: Array<CCBlock> = await getTranscript(vidData.baseUrl)
-  
-  // create video and audio cut instructions for ffmpeg based on search word
-  
-  const download = false;
-  if (download) {
-    const keyword = 'greatest'
-    const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, keyword)
-    await downloadFile(`https://www.youtube.com/watch?v=${vs.videoID}`)
-    const tempPath = './temp/temp.mp4'
-    const permPath = `./temp/${videoTitle}.mp4`
-    rename(tempPath, permPath, async () => {
-      console.log('renamed the shit, start cutting the video')
-      await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
-    });
-  }
-  
-  const pageData = {
-    title: 'Subs for your video',
-    videoTitle: videoTitle,
-    captions: lines,
-    thumbs: thumbnails,
-    videoId: vs.videoID,
-    videoUrl: `https://www.youtube.com/watch?v=${vs.videoID}`
-
-  }
-    
-    
-    res.render('index.njk', pageData)
-    return lines;
-  })
-
 async function getVideoData(videoID: string, lang = 'en') {
-  const download = false
   const vs: VideoRequestString = {videoID: videoID, lang: lang}
   const decodedData = await getDecodedVideoInfo(vs.videoID)
   // ensure the decoded data has the captionTracks info
@@ -216,26 +139,9 @@ async function getVideoData(videoID: string, lang = 'en') {
   type ThumbsObject = {thumbnails: [{url:string, width: number, height: number}]}
   const thumbsObj: ThumbsObject = JSON.parse(thumbsMatch)
   const thumbnails = thumbsObj.thumbnails
-  // console.log(thumbsMatch.thumbnails)
-  // const [titleMatch] = titleRegex.exec(decodedData);
 
   // convert XML transcript into an array of CCBlocks
   const lines: Array<CCBlock> = await getTranscript(vidData.baseUrl)
-  
-  // create video and audio cut instructions for ffmpeg based on search word
-  
-  
-  if (download) {
-    const keyword = 'greatest'
-    const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, keyword)
-    await downloadFile(`https://www.youtube.com/watch?v=${vs.videoID}`)
-    const tempPath = './temp/temp.mp4'
-    const permPath = `./temp/${videoTitle}.mp4`
-    rename(tempPath, permPath, async () => {
-      console.log('renamed the shit, start cutting the video')
-      await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
-    });
-  }
   
   return {
     title: 'Subs for your video',
@@ -289,17 +195,19 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     const lines: CCBlock[] = req.body.body
     const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, filterWord)
     await downloadFile(`https://www.youtube.com/watch?v=${videoID}`)
-    const tempPath = './temp/temp.mp4'
+    const uploadInProgressPath = './temp/temp.mp4'
     const permPath = `./temp/${title}.mp4`
-    rename(tempPath, permPath, async () => {
+    const supercutPath = `./cuts/${title}-supercut.mp4`
+    rename(uploadInProgressPath, permPath, async () => {
       console.log('renamed the shit, start cutting the video')
-      await cutVideo(permPath, videoCutInstructions, audioCutInstructions)
+      await cutVideo(permPath, supercutPath, videoCutInstructions, audioCutInstructions);
+      const uploadResult = await uploadToS3(supercutPath);
+      res.send(JSON.stringify(uploadResult))
     });
+    
   } catch(err) {
     console.log(err)  
   }
-
-  res.end() 
 })
 
 function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutInstructions: string, audioCutInstructions: string } {
@@ -338,28 +246,19 @@ async function downloadFile(downloadURL: string) {
           asetpts=N/SR/TB" out.mp4
   source: https://stackoverflow.com/questions/50594412/cut-multiple-parts-of-a-video-with-ffmpeg
 */
-async function cutVideo(videoPath: string, videoCutInstructions: string, audioCutInstructions: string) {
+async function cutVideo(videoPath: string, permPath: string, videoCutInstructions: string, audioCutInstructions: string) {
   console.log("Inside cutvideo function", videoPath) 
-  /* 
-    working harcoded version, for reference
+  new Promise( (resolve, reject) => {
     ffmpeg(videoPath)
       .outputOptions(
-        "-vf", "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)', setpts=N/FRAME_RATE/TB", 
-        "-af", "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)', asetpts='N/SR/TB'"
+        "-vf", `${videoCutInstructions}`, 
+        "-af", `${audioCutInstructions}`
       )
-      .on('end', () => console.log("we've done it"))
-      .on('error', (err) => console.error(err))
-      .save('./cuts/trimmed.mp4')
-  */
-  
-  ffmpeg(videoPath)
-    .outputOptions(
-      "-vf", `${videoCutInstructions}`, 
-      "-af", `${audioCutInstructions}`
-    )
-    .on('end', () => console.log("we've done it"))
-    .on('error', (err) => console.error(err))
-    .save('./cuts/trimmed.mp4')
+      .on('end', () => resolve)
+      .on('error', (err) => reject(err))
+      .save(permPath)
+  })
+ 
 }
 
 app.listen(port, () => {
