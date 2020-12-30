@@ -8,7 +8,7 @@ import striptags from 'striptags'
 import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
 import bodyParser from 'body-parser';
-import {s3} from './s3-config';
+import {s3} from './s3';
 
 const BUCKET_NAME = 'supercuts'
 
