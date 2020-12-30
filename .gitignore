@@ -31,3 +31,9 @@ build/
 
 # Misc
 .DS_Store
+
+src/s3-config.ts
+
+s3-config.js
+test.js
+.env
