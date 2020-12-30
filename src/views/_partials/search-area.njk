@@ -35,6 +35,9 @@
     </template>
     <template x-if="videoData">
       <div class="subtitles">
+        <template x-if="supercutSuccess">
+          <video :src="supercutURL" controls></video>
+        </template>
         <h2 x-text="'Subs for ' + videoData.videoTitle"></h2>
         <img :src="videoData.thumbs[0].url" :width="videoData.thumbs[0].width" alt="">
         <template

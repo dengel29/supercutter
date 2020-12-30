@@ -10,39 +10,42 @@ import ffmpeg from 'fluent-ffmpeg';
 import bodyParser from 'body-parser';
 import {s3} from './s3-config';
 
-
 const BUCKET_NAME = 'supercuts'
 
 type S3UploadResult = {
   success: boolean,
   value: string
 }
-const uploadToS3 = async (filePath:string): Promise<S3UploadResult> => {
-  const fileContent = fs.readFileSync(filePath);
-  const title = filePath.replace(/.\/cuts/, '').replace(/[/|\s|-]/g, '-')
-  const params = {
-    Bucket: BUCKET_NAME,
-    Key: title, // File name you want to save as in S3
-    Body: fileContent,
-    ACL:'public-read'
-  };
-  let uploadOutcome: S3UploadResult
-  const upload = s3.upload(params)
-  return upload.promise().then(data => {
-    console.log(`File uploaded successfully. ${data.Location}`);
-    uploadOutcome = {
-      success: true,
-      value: data.Location
-    }
-    console.log(uploadOutcome)
-    return uploadOutcome
-  }, err => {
-    uploadOutcome = {
-      success: false, 
-      value: err.message
-    }
-    console.log(uploadOutcome)
-    return uploadOutcome
+async function uploadToS3(filePath:string): Promise<S3UploadResult> {
+  return new Promise<S3UploadResult> ((resolve, reject) => {
+    console.log('made it to upload')
+    const fileContent = fs.readFileSync(filePath);
+    const title = filePath.replace(/.\/cuts/, '').replace(/[/|\s|-]/g, '-')
+    const params = {
+      Bucket: BUCKET_NAME,
+      Key: title, // File name you want to save as in S3
+      Body: fileContent,
+      ACL:'public-read'
+    };
+    console.log('getting ready to upload the thing')
+    let uploadOutcome: S3UploadResult
+    const upload = s3.upload(params)
+    upload.promise().then(data => {
+      console.log(`File uploaded successfully. ${data.Location}`);
+      uploadOutcome = {
+        success: true,
+        value: data.Location
+      }
+      console.log(uploadOutcome)
+      resolve(uploadOutcome)
+    }, err => {
+      uploadOutcome = {
+        success: false, 
+        value: err.message
+      }
+      console.log(uploadOutcome)
+      reject(uploadOutcome)
+    })
   })
 }
 
@@ -85,7 +88,6 @@ app.get('/p/', async (_, res) => {
 })
 
 app.post('/search-video/:videoURLOrID', async (req,res) => {
-  console.log(req.params)
   const userInput: string = req.params.videoURLOrID;
   try {
     const videoID: string = ytdl.getVideoID(userInput)
@@ -95,6 +97,7 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
     if (err.message == `No video id found: ${userInput}`)
     res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
   }
+  return
 })
 
 async function getVideoData(videoID: string, lang = 'en') {
@@ -117,7 +120,6 @@ async function getVideoData(videoID: string, lang = 'en') {
       }
     ]
   */
-  
   // get caption tracks or throw an error
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match]: RegExpExecArray = regex.exec(decodedData);
@@ -187,6 +189,7 @@ async function getTranscript(videoDataURL: string): Promise<Array<CCBlock>> {
 }
 
 app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (req, res) {
+  req.setTimeout(0);
   try {
     console.log(req.params)
     const filterWord = req.params.filterWord;
@@ -195,15 +198,17 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     const lines: CCBlock[] = req.body.body
     const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, filterWord)
     await downloadFile(`https://www.youtube.com/watch?v=${videoID}`)
+    console.log('next....')
     const uploadInProgressPath = './temp/temp.mp4'
     const permPath = `./temp/${title}.mp4`
     const supercutPath = `./cuts/${title}-supercut.mp4`
     rename(uploadInProgressPath, permPath, async () => {
-      console.log('renamed the shit, start cutting the video')
       await cutVideo(permPath, supercutPath, videoCutInstructions, audioCutInstructions);
       const uploadResult = await uploadToS3(supercutPath);
+      console.log('past the upload')
+      console.log('uploadResult', uploadResult)
       res.send(JSON.stringify(uploadResult))
-    });
+    })
     
   } catch(err) {
     console.log(err)  
@@ -229,10 +234,14 @@ function createFFMPEGInstructions(lines: CCBlock[], keyword: string): {videoCutI
 }
 
 async function downloadFile(downloadURL: string) {
-  return new Promise( (resolve, reject) => {
+  console.log('downloading file')
+  return new Promise<void>( (resolve, reject) => {
     const stream = fs.createWriteStream('./temp/temp.mp4')
     ytdl(downloadURL).pipe(stream)
-    stream.on('finish', resolve);
+    stream.on('finish', () => {
+      console.log('finished streaming video')
+      resolve()
+    });
     stream.on('error', reject);
   })
 }
@@ -248,17 +257,16 @@ async function downloadFile(downloadURL: string) {
 */
 async function cutVideo(videoPath: string, permPath: string, videoCutInstructions: string, audioCutInstructions: string) {
   console.log("Inside cutvideo function", videoPath) 
-  new Promise( (resolve, reject) => {
+  return new Promise<void>( (resolve, reject)  => {
     ffmpeg(videoPath)
       .outputOptions(
         "-vf", `${videoCutInstructions}`, 
         "-af", `${audioCutInstructions}`
       )
-      .on('end', () => resolve)
+      .on('end', () => resolve())
       .on('error', (err) => reject(err))
       .save(permPath)
   })
- 
 }
 
 app.listen(port, () => {
