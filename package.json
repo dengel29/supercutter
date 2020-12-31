@@ -34,7 +34,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "watch-style": "node-sass --watch src/styles/** -o build/src/styles/"
+    "watch-style": "node-sass --watch src/styles/** -o build/src/styles/",
+    "prod:start": "npm run clean && npm run build && cp -r src/views/ build/src/views && node build/src/main.js"
   },
   "author": "Jakub Synowiec <github@jakubsynowiec.info>",
   "license": "Apache-2.0",
