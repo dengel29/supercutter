@@ -9,6 +9,7 @@ import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
 import bodyParser from 'body-parser';
 import {s3} from './s3';
+import cors from 'cors'
 
 const BUCKET_NAME = 'supercuts'
 
@@ -16,6 +17,7 @@ type S3UploadResult = {
   success: boolean,
   value: string
 }
+
 async function uploadToS3(filePath:string): Promise<S3UploadResult> {
   return new Promise<S3UploadResult> ((resolve, reject) => {
     console.log('made it to upload')
@@ -54,11 +56,13 @@ const app = express()
 const port = 3000;
 const jsonParser = bodyParser.json()
 
+
 // middleware
 app.use(express.static(path.join('build', 'src')));
 app.use(express.urlencoded({
   extended: true
 }))
+app.use(cors())
 
 // nunjucks template config
 nunjucks.configure(path.join(__dirname, 'views'), {
