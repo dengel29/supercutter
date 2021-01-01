@@ -1,9 +1,7 @@
 import AWS from 'aws-sdk'
-// Enter copied or downloaded access ID and secret key here
-const ID = process.env.AWS_ID
-const SECRET = process.env.AWS_SECRET
+import {config} from './environment'
 
 export const s3 = new AWS.S3({
-  accessKeyId: ID,
-  secretAccessKey: SECRET
+  accessKeyId: config.AWS.ID,
+  secretAccessKey: config.AWS.SECRET
 });
