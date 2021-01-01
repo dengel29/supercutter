@@ -1,4 +1,5 @@
 import fs, { rename } from 'fs';
+import {config} from './environment';
 import path from 'path';
 import express from 'express';
 import nunjucks from 'nunjucks';
@@ -10,7 +11,9 @@ import ffmpeg from 'fluent-ffmpeg';
 import bodyParser from 'body-parser';
 import {s3} from './s3';
 import cors from 'cors'
+console.log(process.env.NODE_ENV)
 
+console.log(process.env.AWS_ID)
 const BUCKET_NAME = 'supercuts'
 
 type S3UploadResult = {
@@ -59,6 +62,8 @@ const jsonParser = bodyParser.json()
 
 // middleware
 app.use(express.static(path.join('build', 'src')));
+app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
+app.use('/styles', express.static(path.join(__dirname, 'styles')));
 app.use(express.urlencoded({
   extended: true
 }))
@@ -274,5 +279,5 @@ async function cutVideo(videoPath: string, permPath: string, videoCutInstruction
 }
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`Example app listening at ${config.BASE_URL}:${port}`)
 })
