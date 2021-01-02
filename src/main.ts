@@ -1,6 +1,7 @@
 // express packages
 import express from 'express';
 import fs, { rename } from 'fs';
+import {config} from './environment';
 import path from 'path';
 import cors from 'cors';
 import nunjucks from 'nunjucks';
@@ -128,3 +129,4 @@ async function cutVideo(videoPath: string, permPath: string, videoCutInstruction
 app.listen(port, () => {
   console.log(`Example app listening at ${config.BASE_URL}:${port}`)
 })
+

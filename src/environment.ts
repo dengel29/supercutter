@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 
 const development = process.env.NODE_ENV == 'development'
+
 dotenv.config()
 export const config = {
   AWS: {
