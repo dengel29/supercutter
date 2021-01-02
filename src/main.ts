@@ -1,7 +1,6 @@
 // express packages
 import express from 'express';
 import fs, { rename } from 'fs';
-import {config} from './environment';
 import path from 'path';
 import cors from 'cors';
 import nunjucks from 'nunjucks';
@@ -15,22 +14,19 @@ import ffmpeg from 'fluent-ffmpeg';
 import uploadToS3 from './upload-s3';
 import getVideoData from './get-video-data';
 import {config} from './environment';
-import createFFMPEGInstructions from './ffmpeg-instructions'
-
+import createFFMPEGInstructions from './ffmpeg-instructions';
 
 // types
-type CCBlock = {
-  start: number,
-  dur: number,
-  text: string,
-}
+import {CCBlock} from './types';
 
-const app = express()
+// create app 
+const app = express();
 const port = config.PORT;
+const baseURL = config.BASE_URL
 const jsonParser = bodyParser.json()
 
 
-// middleware
+// apply middleware
 app.use(express.static(path.join('build', 'src')));
 app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
 app.use('/styles', express.static(path.join(__dirname, 'styles')));
@@ -127,6 +123,6 @@ async function cutVideo(videoPath: string, permPath: string, videoCutInstruction
 }
 
 app.listen(port, () => {
-  console.log(`Example app listening at ${config.BASE_URL}:${port}`)
+  console.log(`Example app listening at ${baseURL}:${port}`)
 })
 
