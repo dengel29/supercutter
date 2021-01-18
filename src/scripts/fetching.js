@@ -19,7 +19,7 @@ function videoSearch() {
       // returns an error message if it does not exist;
       this.baseURL = window.location.hostname
       this.isLoading = true;
-      fetch(`/search-video/${this.videoURLOrID}`, {
+      fetch(`/search-video/${encodeURIComponent(this.videoURLOrID)}`, {
         method: 'POST'
       })
         .then(res => res.json())

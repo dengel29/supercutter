@@ -1,9 +1,64 @@
-body {
-  margin:2;
-  background-color: rgba(186, 184, 184, 0.072);
+@import "gradient";
+
+$button-gradient: #111827, #54504c;
+
+@mixin flex-column {
+  display: flex; 
+  flex-direction: column;
 }
 
-.subtitles > a {
-  display:block;
-  margin-bottom:1em;
+@mixin full-center {
+  justify-content: center;
+  text-align: center;
+}
+
+@mixin p-flow {
+  margin-bottom: 0.4em
+}
+
+@mixin h-flow {
+  margin-bottom: 1.2em;
+}
+
+@mixin left {
+  text-align: left;
+}
+
+.wrapper {
+  @include flex-column;
+  @include full-center
+}
+
+.search-group {
+  @include h-flow;
+  label {
+    display:block;
+  }
+}
+
+.captions-wrapper {
+  @include flex-column;
+  @include left;
+
+  margin: 0 auto;
+  width: 70%;
+
+  img {
+    @include h-flow;
+  }
+  a {
+    @include p-flow
+  }
+}
+
+button {
+  border: none;
+  outline: none;
+  font-size:0.9rem;
+  border-radius: 4px;
+  color: #fff;
+  font-weight:600;
+  padding: 4px;
+  max-width: 7.5em;
+  @include gradient(bottom, $button-gradient);
 }

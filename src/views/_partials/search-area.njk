@@ -14,6 +14,7 @@
           >
           Find the video
         </button>
+        {% include "./loader.njk" %}
       </div>
     <div class="search-group">
       <label for="search-term">What word do you want to supercut</label>
@@ -25,7 +26,8 @@
         type="submit"
         @click="filterCaptions"
         :disabled="!videoFound"
-        >Filter captions</button>
+        >Filter captions</button>        
+        {% include "./loader.njk" %}
     </div>
     <button
         @click="downloadVideo"
@@ -34,7 +36,7 @@
       <h2 x-text="videoSearchError"></h2>
     </template>
     <template x-if="videoData">
-      <div class="subtitles">
+      <div class="captions-wrapper">
         <template x-if="supercutSuccess">
           <video :src="supercutURL" controls></video>
         </template>

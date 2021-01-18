@@ -1,7 +1,6 @@
 // express packages
 import express from 'express';
 import fs, { rename } from 'fs';
-import {config} from './environment';
 import path from 'path';
 import cors from 'cors';
 import nunjucks from 'nunjucks';
@@ -15,22 +14,19 @@ import ffmpeg from 'fluent-ffmpeg';
 import uploadToS3 from './upload-s3';
 import getVideoData from './get-video-data';
 import {config} from './environment';
-import createFFMPEGInstructions from './ffmpeg-instructions'
-
+import createFFMPEGInstructions from './ffmpeg-instructions';
 
 // types
-type CCBlock = {
-  start: number,
-  dur: number,
-  text: string,
-}
+import {CCBlock} from './types';
 
-const app = express()
+// create app 
+const app = express();
 const port = config.PORT;
+const baseURL = config.BASE_URL
 const jsonParser = bodyParser.json()
 
 
-// middleware
+// apply middleware
 app.use(express.static(path.join('build', 'src')));
 app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
 app.use('/styles', express.static(path.join(__dirname, 'styles')));
@@ -52,13 +48,21 @@ app.get('/p/', async (_, res) => {
 
 app.post('/search-video/:videoURLOrID', async (req,res) => {
   const userInput: string = req.params.videoURLOrID;
+  console.log("start request for video", userInput)
   try {
+    console.log("userInput", userInput)
     const videoID: string = ytdl.getVideoID(userInput)
-    const videoData = await getVideoData(videoID)
+    console.log("videoId",videoID)
+    const videoData = await getVideoData(videoID, 'en')
     res.send(JSON.stringify({videoData: videoData}))
   } catch(err) {
-    if (err.message == `No video id found: ${userInput}`)
-    res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
+    if (err.message == `No video id found: ${userInput}`) {
+      res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
+    } else if (err.message == `Could not find captions for video: ${userInput}`) {
+      res.send(JSON.stringify({errorMessage: "Sorry, couldn't find captions data for the video"}))
+    } else {
+      res.send(JSON.stringify({errorMessage: err.message}))
+    }
   }
   return
 })
@@ -127,6 +131,6 @@ async function cutVideo(videoPath: string, permPath: string, videoCutInstruction
 }
 
 app.listen(port, () => {
-  console.log(`Example app listening at ${config.BASE_URL}:${port}`)
+  console.log(`Example app listening at ${baseURL}:${port}`)
 })
 
