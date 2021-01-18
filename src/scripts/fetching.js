@@ -51,7 +51,7 @@ function videoSearch() {
       // vsY0pdCW9N0
       // send the filtered captions to create the supercut;
       // TODO return a link to video download
-      const title = this.videoData.videoTitle.replace(/\?/g, '')
+      const title = encodeURIComponent(this.videoData.videoTitle.replace(/\/\?/g, ''))
       fetch(`/download/${this.videoData.videoID}/${title}/${this.filterWord}`, {
         method: 'POST',
         body: JSON.stringify(body),

@@ -48,11 +48,8 @@ app.get('/p/', async (_, res) => {
 
 app.post('/search-video/:videoURLOrID', async (req,res) => {
   const userInput: string = req.params.videoURLOrID;
-  console.log("start request for video", userInput)
   try {
-    console.log("userInput", userInput)
     const videoID: string = ytdl.getVideoID(userInput)
-    console.log("videoId",videoID)
     const videoData = await getVideoData(videoID, 'en')
     res.send(JSON.stringify({videoData: videoData}))
   } catch(err) {
