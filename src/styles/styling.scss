@@ -1,70 +1,64 @@
-.loader {
-  display: flex;
-  height: 20px;
-  width: 30px; }
+@import "gradient";
 
-.lds-grid {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 10%;
-  background-color: rgba(47, 17, 54, 0.757); }
+$button-gradient: #111827, #54504c;
 
-.lds-grid div {
-  position: absolute;
-  width: 20%;
-  height: 20%;
-  border-radius: 50%;
-  background: #89cb88;
-  animation: lds-grid 1.2s linear infinite; }
+@mixin flex-column {
+  display: flex; 
+  flex-direction: column;
+}
 
-.lds-grid div:nth-child(1) {
-  top: 10%;
-  left: 10%;
-  animation-delay: 0s; }
+@mixin full-center {
+  justify-content: center;
+  text-align: center;
+}
 
-.lds-grid div:nth-child(2) {
-  top: 10%;
-  left: 40%;
-  animation-delay: -0.4s; }
+@mixin p-flow {
+  margin-bottom: 0.4em
+}
 
-.lds-grid div:nth-child(3) {
-  top: 10%;
-  left: 70%;
-  animation-delay: -0.8s; }
+@mixin h-flow {
+  margin-bottom: 1.2em;
+}
 
-.lds-grid div:nth-child(4) {
-  top: 40%;
-  left: 10%;
-  animation-delay: -0.4s; }
+@mixin left {
+  text-align: left;
+}
 
-.lds-grid div:nth-child(5) {
-  top: 40%;
-  left: 40%;
-  animation-delay: -0.8s; }
+.wrapper {
+  @include flex-column;
+  @include full-center
+}
 
-.lds-grid div:nth-child(6) {
-  top: 40%;
-  left: 70%;
-  animation-delay: -1.2s; }
+.search-group {
+  @include h-flow;
+  label {
+    display:block;
+  }
+}
 
-.lds-grid div:nth-child(7) {
-  top: 70%;
-  left: 10%;
-  animation-delay: -0.8s; }
+.captions-wrapper {
+  @include flex-column;
+  @include left;
 
-.lds-grid div:nth-child(8) {
-  top: 70%;
-  left: 40%;
-  animation-delay: -1.2s; }
+  margin: 0 auto;
+  width: 70%;
 
-.lds-grid div:nth-child(9) {
-  top: 70%;
-  left: 70%;
-  animation-delay: -1.6s; }
+  img {
+    @include h-flow;
+  }
+  a {
+    @include p-flow
+  }
+}
 
-@keyframes lds-grid {
-  0%, 100% {
-    opacity: 1; }
-  50% {
-    opacity: 0.2; } }
+button {
+  border: none;
+  outline: none;
+  font-size:0.9rem;
+  border-radius: 4px;
+  color: #fff;
+  font-weight:600;
+  padding: 4px;
+  max-width: 7.5em;
+  @include gradient(bottom, $button-gradient);
+}

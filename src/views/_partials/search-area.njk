@@ -36,7 +36,7 @@
       <h2 x-text="videoSearchError"></h2>
     </template>
     <template x-if="videoData">
-      <div class="subtitles">
+      <div class="captions-wrapper">
         <template x-if="supercutSuccess">
           <video :src="supercutURL" controls></video>
         </template>

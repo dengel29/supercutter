@@ -48,13 +48,21 @@ app.get('/p/', async (_, res) => {
 
 app.post('/search-video/:videoURLOrID', async (req,res) => {
   const userInput: string = req.params.videoURLOrID;
+  console.log("start request for video", userInput)
   try {
+    console.log("userInput", userInput)
     const videoID: string = ytdl.getVideoID(userInput)
-    const videoData = await getVideoData(videoID)
+    console.log("videoId",videoID)
+    const videoData = await getVideoData(videoID, 'en')
     res.send(JSON.stringify({videoData: videoData}))
   } catch(err) {
-    if (err.message == `No video id found: ${userInput}`)
-    res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
+    if (err.message == `No video id found: ${userInput}`) {
+      res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
+    } else if (err.message == `Could not find captions for video: ${userInput}`) {
+      res.send(JSON.stringify({errorMessage: "Sorry, couldn't find captions data for the video"}))
+    } else {
+      res.send(JSON.stringify({errorMessage: err.message}))
+    }
   }
   return
 })

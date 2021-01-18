@@ -37,8 +37,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "style": "node-sass src/**/*.scss -o build/src/styles/",
-    "watch-style": "npm run style && node-sass --watch src/**/*.scss -o build/src/styles/",
+    "style": "node-sass-chokidar src/**/*.scss -o build/src/styles/",
+    "watch-style": "npm run style && node-sass-chokidar src/styles -o build/src/styles/ --watch",
     "prod:deliver": "npm run build && node-sass src/styles/** -o build/src/styles/ && cp -r src/views/ build/src/views && cp package.json build/src/ && cp .env build/src/ && scp -r ./build root@134.122.13.169:~/supercutter"
   },
   "author": "Jakub Synowiec <github@jakubsynowiec.info>",
@@ -52,11 +52,12 @@
     "fluent-ffmpeg": "^2.1.2",
     "he": "^1.2.0",
     "node-sass": "^5.0.0",
+    "node-sass-chokidar": "^1.5.0",
     "nunjucks": "^3.2.2",
     "striptags": "^3.1.1",
     "tslib": "~2.0.3",
     "youtube-captions-scraper": "^1.0.3",
-    "ytdl-core": "^4.2.1"
+    "ytdl-core": "^4.4.0"
   },
   "volta": {
     "node": "14.15.0"
