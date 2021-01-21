@@ -23,7 +23,8 @@ import {CCBlock} from './types';
 const app = express();
 const port = config.PORT;
 const baseURL = config.BASE_URL
-const jsonParser = bodyParser.json()
+const jsonParser = bodyParser.json();
+
 
 
 // apply middleware
@@ -48,11 +49,8 @@ app.get('/p/', async (_, res) => {
 
 app.post('/search-video/:videoURLOrID', async (req,res) => {
   const userInput: string = req.params.videoURLOrID;
-  console.log("start request for video", userInput)
   try {
-    console.log("userInput", userInput)
     const videoID: string = ytdl.getVideoID(userInput)
-    console.log("videoId",videoID)
     const videoData = await getVideoData(videoID, 'en')
     res.send(JSON.stringify({videoData: videoData}))
   } catch(err) {
@@ -78,9 +76,9 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, filterWord)
     await downloadFile(`https://www.youtube.com/watch?v=${videoID}`)
     console.log('next....')
-    const uploadInProgressPath = './temp/temp.mp4'
-    const permPath = `./temp/${title}.mp4`
-    const supercutPath = `./cuts/${title}-supercut.mp4`
+    const uploadInProgressPath = path.join('.', 'temp', 'temp.mp4');
+    const permPath = path.join('.', 'temp', `${title}.mp4`);
+    const supercutPath = path.join('.', 'cuts', `${title}-supercut.mp4`);
     rename(uploadInProgressPath, permPath, async () => {
       await cutVideo(permPath, supercutPath, videoCutInstructions, audioCutInstructions);
       const uploadResult = await uploadToS3(supercutPath);
@@ -97,8 +95,11 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
 async function downloadFile(downloadURL: string) {
   console.log('downloading file')
   return new Promise<void>( (resolve, reject) => {
-    const stream = fs.createWriteStream('./temp/temp.mp4')
-    ytdl(downloadURL).pipe(stream)
+    const stream = fs.createWriteStream(path.join('.', 'temp', 'temp.mp4'))
+    stream.on('open', () => {
+
+      ytdl(downloadURL).pipe(stream)
+    })
     stream.on('finish', () => {
       console.log('finished streaming video')
       resolve()

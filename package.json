@@ -33,16 +33,16 @@
     "clean": "rimraf coverage build tmp",
     "watch-dev": "tsnd --respawn src/main.ts",
     "build": "tsc -p tsconfig.release.json",
+    "build:all": "npm run build && node-sass src/styles/** -o build/src/styles/ && cp -r src/views/ build/src/views",
     "watch-build": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "style": "node-sass-chokidar src/**/*.scss -o build/src/styles/",
     "watch-style": "npm run style && node-sass-chokidar src/styles -o build/src/styles/ --watch",
-    "prod:deliver": "npm run build && node-sass src/styles/** -o build/src/styles/ && cp -r src/views/ build/src/views && cp package.json build/src/ && cp .env build/src/ && scp -r ./build root@134.122.13.169:~/supercutter"
+    "prod:deliver": "npm run build:all && cp .env ecosystem.config.js package.json build/src/ && scp -r ./build root@139.59.242.210:~/supercutter"
   },
-  "author": "Jakub Synowiec <github@jakubsynowiec.info>",
-  "license": "Apache-2.0",
+  "author": "Dan Engel",
   "dependencies": {
     "aws-sdk": "^2.818.0",
     "body-parser": "^1.19.0",

@@ -37,3 +37,4 @@ src/s3-config.ts
 s3-config.js
 test.js
 .env
+ecosystem.config.js
