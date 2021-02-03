@@ -3,7 +3,9 @@ import path from 'path';
 
 const development = process.env.NODE_ENV == 'development'
 
-dotenv.config({path: path.join(__dirname, '.env')})
+const pathToConfig = development ? path.join(process.env.PWD, '.env') : path.join(__dirname, '.env')
+dotenv.config({path: pathToConfig})
+
 export const config = {
   AWS: {
     ID: process.env.AWS_ID,
