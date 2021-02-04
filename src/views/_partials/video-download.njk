@@ -1,0 +1,7 @@
+<div class="video-download wrapper">
+    {% include "./loader.njk" %}
+    <template x-if="supercutSuccess">
+        <video :src="supercutURL" controls download></video>
+        <a :href="supercutURL">Link to video</a>
+    </template>
+</div>

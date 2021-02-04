@@ -14,7 +14,6 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   const vs: VideoRequestString = {videoID: videoID, lang: lang}
   const decodedData = await getDecodedVideoInfo(vs.videoID)
   // ensure the decoded data has the captionTracks info
-  console.log(decodedData)
   if (!decodedData.includes('captionTracks')) {
     console.log('error')
     throw new Error(`Could not find captions for video: ${vs.videoID}`);

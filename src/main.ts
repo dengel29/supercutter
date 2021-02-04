@@ -68,7 +68,6 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
 app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (req, res) {
   req.setTimeout(0);
   try {
-    console.log(req.params)
     const filterWord = req.params.filterWord;
     const title = req.params.title;
     const videoID = req.params.videoID;
