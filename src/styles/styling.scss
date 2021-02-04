@@ -1,9 +1,10 @@
-@import "gradient";
+@import 'gradient';
 
-$button-gradient: #111827, #54504c;
+$dark-gradient: #111827, #54504c;
+$btn-gradient: white, #463042;
 
 @mixin flex-column {
-  display: flex; 
+  display: flex;
   flex-direction: column;
 }
 
@@ -13,7 +14,7 @@ $button-gradient: #111827, #54504c;
 }
 
 @mixin p-flow {
-  margin-bottom: 0.4em
+  margin-bottom: 0.4em;
 }
 
 @mixin h-flow {
@@ -24,41 +25,118 @@ $button-gradient: #111827, #54504c;
   text-align: left;
 }
 
+body {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
+    'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  @include gradient(left, $dark-gradient);
+  color: white;
+}
+
+.content-grid {
+  height: 100vh;
+}
+
 .wrapper {
   @include flex-column;
-  @include full-center
+  @include full-center;
+}
+.fixed-h {
+  height: 100vh;
+  display: unset;
 }
 
 .search-group {
   @include h-flow;
   label {
-    display:block;
+    display: block;
   }
 }
 
+.video-download {
+  width: 100%;
+}
+
 .captions-wrapper {
-  @include flex-column;
-  @include left;
-
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   margin: 0 auto;
-  width: 70%;
-
+  width: 100%;
+  @include h-flow;
   img {
+    margin: 0 auto;
     @include h-flow;
   }
   a {
-    @include p-flow
+    @include p-flow;
+    color: #ffa1ec;
   }
+  h2 {
+    text-align:center;
+  }
+  .captions-list {
+    @include flex-column;
+    @include left;
+    margin-top:2em;
+    max-height: 20em;
+    overflow-y:auto;
+  }
+  @media (max-width: 600px) {
+    display: flex;
+    flex-direction:column-reverse
+    
+  }
+}
+
+.input-group {
+  display:flex;
+  align-items:center;
+  justify-content: center;
+  margin-top:0.6em;
+  @include h-flow;
+}
+
+input {
+  height:2em;
+  border-radius:5px;
+  text-align:center
 }
 
 button {
   border: none;
   outline: none;
-  font-size:0.9rem;
+  font-size: 0.9rem;
   border-radius: 4px;
-  color: #fff;
-  font-weight:600;
+  color: white;
+  font-weight: 600;
   padding: 4px;
   max-width: 7.5em;
-  @include gradient(bottom, $button-gradient);
+  background: #463042;
+  border: 2px solid #ffa1ec;
+  cursor: pointer;
+  margin-left:5px;
+  &:active {
+    border: 1px solid white
+  }
+  &:disabled {
+    border: 2px solid grey;
+    color: #ccbfbf;
+    background-color:rgba(25, 28, 28, 0.94)
+  }
+}
+
+h3 {
+  font-size: 1.5em;
+  text-align: center;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+.two-col-grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
 }

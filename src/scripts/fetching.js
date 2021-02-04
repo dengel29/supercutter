@@ -13,6 +13,7 @@ function videoSearch() {
     sendableCaptions: '',
     supercutSuccess: null,
     supercutURL: '',
+    hasFiltered: false,
     searchYoutube() {
       // send the ID or URL to see if the video exists;
       // returns to client subtitles if it does exist;
@@ -32,9 +33,8 @@ function videoSearch() {
             this.videoFound = false;
           } else {
             this.videoSearchError = null;
-            console.log(data.videoData);
             this.videoFound = true;
-            this.videoData = data.videoData
+            this.videoData = data.videoData;
             this.filteredCaptions = data.videoData.captions
           }
         })
@@ -42,10 +42,11 @@ function videoSearch() {
     filterCaptions() {
       // filter captions that have already been returned;
       this.filteredCaptions = this.videoData.captions.filter(line => line.text.includes(this.filterWord))
-
+      this.hasFiltered = true
     },
 
     downloadVideo() {
+      this.isLoading = true;
       const body = { body: this.filteredCaptions }
 
       // vsY0pdCW9N0
@@ -61,6 +62,7 @@ function videoSearch() {
       })
         .then(res => res.json())
         .then(data => {
+          this.isLoading = false;
           this.supercutSuccess = data.success
           this.supercutURL = data.value;
         })

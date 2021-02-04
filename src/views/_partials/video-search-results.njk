@@ -1,0 +1,24 @@
+<div class="search-results">
+    <template x-if="videoSearchError">
+        <h2 x-text="videoSearchError"></h2>
+    </template>
+    <template x-if="videoData">
+        <div class="captions-wrapper">
+        <div class="captions-list">
+            <template
+                x-for="caption in filteredCaptions"
+                :key="caption.start"
+            > 
+            <a 
+                id="caption.start"
+                :href="'https://www.youtube.com/watch?v=' + videoData.videoID + '&t=' + caption.start + 's'"
+                x-text="caption.start + ' | ' + caption.text"></a>
+            </template>
+        </div>
+        <div class="video-info">
+            <h2 x-text="'Subs for ' + videoData.videoTitle"></h2>
+            <img :src="videoData.thumbs[0].url" :width="videoData.thumbs[0].width" alt="">
+        </div>
+        </div>
+    </template>
+</div>
