@@ -10,6 +10,7 @@ function videoSearch() {
     videoURLOrID: '',
     video: null,
     filteredCaptions: null,
+    noMatch: null,
     sendableCaptions: '',
     supercutSuccess: null,
     supercutURL: '',
@@ -50,6 +51,7 @@ function videoSearch() {
       let filter = new RegExp(this.filterWord, "i")
       this.filteredCaptions = this.videoData.captions.filter(line => line.text.match(filter))
       this.hasFiltered = true
+      this.noMatch = this.filteredCaptions.length < 1
     },
 
     downloadVideo() {

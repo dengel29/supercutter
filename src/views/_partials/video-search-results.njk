@@ -5,6 +5,9 @@
     <template x-if="videoData">
         <div class="captions-wrapper">
         <div class="captions-list">
+        <template x-if="noMatch">
+            <h2>No terms match your filter word, try another filter word</h2>
+        </template>
             <template
                 x-for="caption in filteredCaptions"
                 :key="caption.start"
