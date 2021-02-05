@@ -18,6 +18,12 @@ function videoSearch() {
       // send the ID or URL to see if the video exists;
       // returns to client subtitles if it does exist;
       // returns an error message if it does not exist;
+      this.videoData = null;
+      this.videoSearchError = null;
+      this.filterWord = '';
+      this.title = null;
+      this.filteredCaptions = null;
+      this.videoFound = false;
       this.baseURL = window.location.hostname
       this.isLoading = true;
       fetch(`/search-video/${encodeURIComponent(this.videoURLOrID)}`, {
@@ -41,7 +47,8 @@ function videoSearch() {
     },
     filterCaptions() {
       // filter captions that have already been returned;
-      this.filteredCaptions = this.videoData.captions.filter(line => line.text.includes(this.filterWord))
+      let filter = new RegExp(this.filterWord, "i")
+      this.filteredCaptions = this.videoData.captions.filter(line => line.text.match(filter))
       this.hasFiltered = true
     },
 

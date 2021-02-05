@@ -57,7 +57,7 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
     if (err.message == `No video id found: ${userInput}`) {
       res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
     } else if (err.message == `Could not find captions for video: ${userInput}`) {
-      res.send(JSON.stringify({errorMessage: "Sorry, couldn't find captions data for the video"}))
+      res.send(JSON.stringify({errorMessage: "Sorry, couldn't find captions data for the video. Try another one"}))
     } else {
       res.send(JSON.stringify({errorMessage: err.message}))
     }
