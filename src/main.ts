@@ -43,7 +43,7 @@ nunjucks.configure(path.join(__dirname, 'views'), {
   watch: true
 });
 
-app.get('/p/', async (_, res) => {
+app.get('/', async (_, res) => {
   res.render('index.njk')
 })
 
@@ -57,7 +57,7 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
     if (err.message == `No video id found: ${userInput}`) {
       res.send(JSON.stringify({errorMessage: "Please enter a youtube video ID or a full YouTube URL"}))
     } else if (err.message == `Could not find captions for video: ${userInput}`) {
-      res.send(JSON.stringify({errorMessage: "Sorry, couldn't find captions data for the video"}))
+      res.send(JSON.stringify({errorMessage: "Sorry, couldn't find captions data for the video. Try another one"}))
     } else {
       res.send(JSON.stringify({errorMessage: err.message}))
     }
@@ -77,7 +77,7 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     console.log('next....')
     const uploadInProgressPath = path.join('.', 'temp', 'temp.mp4');
     const permPath = path.join('.', 'temp', `${title}.mp4`);
-    const supercutPath = path.join('.', 'cuts', `${title}-supercut.mp4`);
+    const supercutPath = path.join('.', 'cuts', `${title}-${filterWord}-supercut.mp4`);
     rename(uploadInProgressPath, permPath, async () => {
       await cutVideo(permPath, supercutPath, videoCutInstructions, audioCutInstructions);
       const uploadResult = await uploadToS3(supercutPath);
@@ -89,6 +89,10 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
   } catch(err) {
     console.log(err)  
   }
+})
+
+app.get('*', (_, res) => {
+  res.redirect('/')
 })
 
 async function downloadFile(downloadURL: string) {

@@ -1,8 +1,23 @@
-<div class="search-results">
-    <template x-if="videoSearchError">
-        <h2 x-text="videoSearchError"></h2>
-    </template>
+{# <div class="search-results">
     <template x-if="videoData">
+        <template x-if="hasFiltered && !noMatch">
+
+            <p
+            class="h-highlight"
+            x-text="searchedFilterWord"></p>
+            <p>is said</p>
+            <p
+            class="h-highlight"
+            x-text="filteredCaptions.length"></p>
+            <p>times in this video.</p><br style="margin-bottom:1em"><p> If you made a supercut from this word, the resulting video would be about</p>
+        <p 
+        class="h-highlight"
+        x-text="Math.round(totalDuration) + ' seconds'"></p>    
+        </template>
+        <template x-if="noMatch">
+            <h4 
+            x-text="'⚠️ ' + searchedFilterWord + ' doesn\'t appear in the dialogue of this video, try another word' "></h4>
+        </template>
         <div class="captions-wrapper">
         <div class="captions-list">
             <template
@@ -21,4 +36,4 @@
         </div>
         </div>
     </template>
-</div>
+</div> #}

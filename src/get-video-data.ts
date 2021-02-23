@@ -3,10 +3,17 @@ import {CCBlock, ThumbsObject, VideoData, VideoRequestString} from './types';
 import getTranscript from './get-transcript'
 
 async function getDecodedVideoInfo(url:string): Promise<string> {
-  const { data } = await axios.get(
-  `https://youtube.com/get_video_info?video_id=${url}`
-);
-  return decodeURIComponent(data);
+  let msg;
+  try {
+    const { data } = await axios.get(
+    `https://youtube.com/get_video_info?video_id=${url}`
+    );
+    msg = decodeURIComponent(data);
+    
+  } catch(e) {
+    msg = "There was an error decoding the video data. Try again."
+  }
+  return msg
 }
 
 export default async function getVideoData(videoID: string, lang: string): Promise<VideoData> {
@@ -14,9 +21,20 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   const vs: VideoRequestString = {videoID: videoID, lang: lang}
   const decodedData = await getDecodedVideoInfo(vs.videoID)
   // ensure the decoded data has the captionTracks info
+  // console.log(decodedData)
+  //// title
+  const titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
+  const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
+  const uploadDateRegex = /\d\d\d\d-\d\d-\d\d/;
+  const uploadDate = uploadDateRegex.exec(decodedData)[0]
+  // console.log(uploadDate)
   if (!decodedData.includes('captionTracks')) {
-    console.log('error')
-    throw new Error(`Could not find captions for video: ${vs.videoID}`);
+    let uploadedTime: number = Math.round(((new Date().getTime() - new Date(uploadDate).getTime()) / 86400000))
+    console.log(uploadedTime)
+    if (uploadedTime < 10) {
+      throw new Error(`Could not find captions for video: ${videoTitle}. It was only uploaded in the past 10 days, so Google or the uploader might not have created subtitles for it. Try again in a few days, or try another video`)
+    }
+    throw new Error(`Could not find captions for video: ${videoTitle}`);
   }
 
   /* captionTracks look like this: 
@@ -35,7 +53,7 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   // get caption tracks or throw an error
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match]: RegExpExecArray = regex.exec(decodedData);
-  console.log("match",match)
+  // console.log(decodedData)
   const { captionTracks } = JSON.parse(`${match}}`);
   const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
   // * ensure we have found the correct vidData lang
@@ -45,9 +63,7 @@ export default async function getVideoData(videoID: string, lang: string): Promi
 
 
   // get other video data after we know we can get captions
-  //// title
-  const titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
-  const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
+
   
   //// thumbnails
   const thumbsRegex = /(?={"thumbnails":).*(?=,"averageRating)/;
