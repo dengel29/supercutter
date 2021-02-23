@@ -6,6 +6,7 @@ function videoSearch() {
     videoFound: false,
     isLoading: false,
     filterWord: '',
+    searchedFilterWord: '',
     title: null,
     videoURLOrID: '',
     video: null,
@@ -15,7 +16,9 @@ function videoSearch() {
     supercutSuccess: null,
     supercutURL: '',
     hasFiltered: false,
-    searchYoutube() {
+    totalDuration: 0,
+    searchYoutube(e) {
+      console.log("working")
       // send the ID or URL to see if the video exists;
       // returns to client subtitles if it does exist;
       // returns an error message if it does not exist;
@@ -34,6 +37,7 @@ function videoSearch() {
         .then(data => {
           this.isLoading = false;
           if (data.errorMessage) {
+            e.target.previousElementSibling.focus()
             this.videoSearchError = data.errorMessage;
             this.videoData = null;
             this.filteredCaptions = null;
@@ -48,10 +52,13 @@ function videoSearch() {
     },
     filterCaptions() {
       // filter captions that have already been returned;
-      let filter = new RegExp(this.filterWord, "i")
-      this.filteredCaptions = this.videoData.captions.filter(line => line.text.match(filter))
-      this.hasFiltered = true
-      this.noMatch = this.filteredCaptions.length < 1
+      let filter = new RegExp(this.filterWord, "i");
+      this.filteredCaptions = this.videoData.captions.filter(line => line.text.match(filter));
+      this.hasFiltered = true;
+      this.noMatch = this.filteredCaptions.length < 1;
+      this.searchedFilterWord = this.filterWord;
+      console.log(this.filteredCaptions[0])
+      this.totalDuration = this.filteredCaptions.reduce((sum, cap) => sum + Number(cap.dur), 0)
     },
 
     downloadVideo() {

@@ -1,7 +1,35 @@
 {% extends "layout.njk" %}
 {% block  content %}
+<div id="get-started">
+  <div class="title-area">
+    <div class="style-border">
+      <h1>SUPERCUT</h1>
+      <h1>.FUN</h1>
+    </div>
+    <div class="style-border-2">
+      <h3>Make supercuts from Youtube videos</h3>
+    </div>
+  </div>
+  {# <div class="example">
+    <video alt="" width="100%" src="https://supercuts.s3.amazonaws.com/cuts-beating-a-Zelda-speedrunner-at-their-own-game-supercut.mp4" controls></video>
+    <div class="steps">
+      <div class="steps-title">
+      -------- Steps --------
+      </div>
+      <div class="steps-body">
+      <p class="highlighted">
+        Find a video on  YouTube
+      </p>
+        <p>Pick a word to filter</p>
+        <p>Confirm your choice</p>
+            <p id="last">Wait for download</p>
+      </div>
+    </div>
+  </div> #}
+  <h2>Ready?</h2>
+  <button class="scroll-to-find">Get Started</button>
+</div>
 <div class="content-grid" x-data="videoSearch()">
   {% include "../views/_partials/search-area.njk" %}
-  {% include "../views/_partials/video-download.njk" %}
 </div>
 {% endblock %}

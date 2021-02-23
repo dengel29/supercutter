@@ -43,7 +43,7 @@ nunjucks.configure(path.join(__dirname, 'views'), {
   watch: true
 });
 
-app.get('/p/', async (_, res) => {
+app.get('/', async (_, res) => {
   res.render('index.njk')
 })
 
@@ -77,7 +77,7 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     console.log('next....')
     const uploadInProgressPath = path.join('.', 'temp', 'temp.mp4');
     const permPath = path.join('.', 'temp', `${title}.mp4`);
-    const supercutPath = path.join('.', 'cuts', `${title}-supercut.mp4`);
+    const supercutPath = path.join('.', 'cuts', `${title}-${filterWord}-supercut.mp4`);
     rename(uploadInProgressPath, permPath, async () => {
       await cutVideo(permPath, supercutPath, videoCutInstructions, audioCutInstructions);
       const uploadResult = await uploadToS3(supercutPath);
@@ -89,6 +89,10 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
   } catch(err) {
     console.log(err)  
   }
+})
+
+app.get('*', (_, res) => {
+  res.redirect('/')
 })
 
 async function downloadFile(downloadURL: string) {
