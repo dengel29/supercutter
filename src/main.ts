@@ -9,12 +9,15 @@ import bodyParser from 'body-parser';
 // 3rd party packages
 import ytdl from 'ytdl-core';
 import ffmpeg from 'fluent-ffmpeg';
+import {Server } from 'socket.io';
+import http from 'http';
 
 // my modules
 import uploadToS3 from './upload-s3';
 import getVideoData from './get-video-data';
 import {config} from './environment';
 import createFFMPEGInstructions from './ffmpeg-instructions';
+
 
 // types
 import {CCBlock} from './types';
@@ -25,7 +28,18 @@ const port = config.PORT;
 const baseURL = config.BASE_URL
 const jsonParser = bodyParser.json();
 
+const httpServer = new http.Server(app)
+const io = new Server(httpServer, {
+  serveClient: false,
+  pingInterval: 10000,
+  pingTimeout: 5000,
+  cookie: false
+})
 
+// io.on("connection", () => {
+//   console.log("we're connected")
+//   // Begin listening to events coming 
+// });
 
 // apply middleware
 app.use(express.static(path.join('build', 'src')));
@@ -73,21 +87,25 @@ app.post('/download/:videoID/:title/:filterWord', jsonParser, async function (re
     const videoID = req.params.videoID;
     const lines: CCBlock[] = req.body.body
     const {videoCutInstructions, audioCutInstructions} = createFFMPEGInstructions(lines, filterWord)
+    io.emit('youtubeVideoDownloadStarted')
     await downloadFile(`https://www.youtube.com/watch?v=${videoID}`)
-    console.log('next....')
+    io.emit('youtubeVideoDownloadComplete')
+    
     const uploadInProgressPath = path.join('.', 'temp', 'temp.mp4');
     const permPath = path.join('.', 'temp', `${title}.mp4`);
     const supercutPath = path.join('.', 'cuts', `${title}-${filterWord}-supercut.mp4`);
     rename(uploadInProgressPath, permPath, async () => {
+      io.emit('supercutStarted')
       await cutVideo(permPath, supercutPath, videoCutInstructions, audioCutInstructions);
+      io.emit('supercutComplete')
+      io.emit('uploadStarted')
       const uploadResult = await uploadToS3(supercutPath);
-      console.log('past the upload')
-      console.log('uploadResult', uploadResult)
+      io.emit('uploadComplete')
       res.send(JSON.stringify(uploadResult))
     })
     
   } catch(err) {
-    console.log(err)  
+    throw new Error(err.message)
   }
 })
 
@@ -96,7 +114,6 @@ app.get('*', (_, res) => {
 })
 
 async function downloadFile(downloadURL: string) {
-  console.log('downloading file')
   return new Promise<void>( (resolve, reject) => {
     const stream = fs.createWriteStream(path.join('.', 'temp', 'temp.mp4'))
     stream.on('open', () => {
@@ -104,7 +121,6 @@ async function downloadFile(downloadURL: string) {
       ytdl(downloadURL).pipe(stream)
     })
     stream.on('finish', () => {
-      console.log('finished streaming video')
       resolve()
     });
     stream.on('error', reject);
@@ -121,20 +137,23 @@ async function downloadFile(downloadURL: string) {
   source: https://stackoverflow.com/questions/50594412/cut-multiple-parts-of-a-video-with-ffmpeg
 */
 async function cutVideo(videoPath: string, permPath: string, videoCutInstructions: string, audioCutInstructions: string) {
-  console.log("Inside cutvideo function", videoPath) 
-  return new Promise<void>( (resolve, reject)  => {
-    ffmpeg(videoPath)
-      .outputOptions(
-        "-vf", `${videoCutInstructions}`, 
-        "-af", `${audioCutInstructions}`
-      )
-      .on('end', () => resolve())
-      .on('error', (err) => reject(err))
-      .save(permPath)
-  })
+  try {
+    return new Promise<void>( (resolve, reject)  => {
+      ffmpeg(videoPath)
+        .outputOptions(
+          "-vf", `${videoCutInstructions}`, 
+          "-af", `${audioCutInstructions}`
+        )
+        .on('end', () => resolve())
+        .on('error', (err) => reject(err))
+        .save(permPath)
+    })
+  } catch (err) {
+    throw new Error(err.message)
+  }
 }
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Example app listening at ${baseURL}:${port}`)
 })
 
