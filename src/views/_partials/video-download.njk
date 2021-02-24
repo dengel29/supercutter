@@ -1,11 +1,12 @@
 <div class="video-download wrapper">
+    <p id="download-progress">This process can take a few minutes, especially if the source video is long. Please be patient and don't close the window!</p>
     <div x-show="!supercutSuccess" style="margin: 0 auto;">
         {% include "./loader.njk" %}
     </div>
     <template x-if="supercutSuccess">
     <div class="video-group">
-        <video :src="supercutURL" controls download></video>
-        <a :href="supercutURL">Link to video</a>
+        <a :href="supercutURL" target="_blank" :download="supercutURL">Link to video</a>
+        <video :src="supercutURL" poster="https://raw.githubusercontent.com/dengel29/img/main/supercutposter.png" controls></video>
     </div>
     </template>
 </div>
