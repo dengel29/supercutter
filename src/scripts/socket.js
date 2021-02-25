@@ -15,7 +15,7 @@ function superCutStarted() {
 //   .innerHtml('Supercut is <mark>downloading</mark> the video from Youtube');
 socket.on('youtubeVideoDownloadStarted', () => {
   document.getElementById('download-progress').innerHTML =
-    'Supercut is <mark>downloading</mark> the video from Youtube';
+    '<p>Supercut is <mark>downloading</mark> the video from Youtube<p>';
 });
 socket.on('youtubeVideoDownloadComplete', () => {
   document.getElementById('download-progress').innerHTML =
@@ -39,7 +39,7 @@ socket.on('uploadComplete', () => {
 });
 socket.on('error', () => {
   document.getElementById('download-progress').innerHTML =
-    'There has been an error :( give our servers a few minutes and try again';
+    '<p>There has been an error :( give our servers a few minutes and try again</p>';
 });
 
 let p = document.createElement('p');

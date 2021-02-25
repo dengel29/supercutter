@@ -37,18 +37,17 @@ $secondary-dark: hsl(160, 100%, 30%);
 }
 
 html {
-  scroll-snap-type: y mandatory;
+  // scroll-snap-type: y;
 }
 
 body {
-  // scroll-snap-type: y proximity;
+  // scroll-snap-type: y;
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
     'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   @include gradient(left, $dark-gradient);
   color: white;
   margin: 0;
   overflow-x: hidden;
-
   font-size: 16px;
 }
 
@@ -486,6 +485,7 @@ h3 {
 
 .disabled {
   position: relative;
+  display: none;
 }
 
 .slide-anim {

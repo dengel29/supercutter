@@ -145,7 +145,10 @@ async function cutVideo(videoPath: string, permPath: string, videoCutInstruction
           "-af", `${audioCutInstructions}`
         )
         .on('end', () => resolve())
-        .on('error', (err) => reject(err))
+        .on('error', (err, stdout, stderr) => {
+          console.log('stdout', stdout)
+          console.log('stderr', stderr)
+          reject(err)})
         .save(permPath)
     })
   } catch (err) {
