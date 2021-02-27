@@ -18,7 +18,7 @@ function videoSearch() {
     hasFiltered: false,
     totalDuration: 0,
     searchYoutube(e) {
-      console.log("working")
+      console.log('working');
       // send the ID or URL to see if the video exists;
       // returns to client subtitles if it does exist;
       // returns an error message if it does not exist;
@@ -28,16 +28,16 @@ function videoSearch() {
       this.title = null;
       this.filteredCaptions = null;
       this.videoFound = false;
-      this.baseURL = window.location.hostname
+      this.baseURL = window.location.hostname;
       this.isLoading = true;
       fetch(`/search-video/${encodeURIComponent(this.videoURLOrID)}`, {
-        method: 'POST'
+        method: 'POST',
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           this.isLoading = false;
           if (data.errorMessage) {
-            e.target.previousElementSibling.focus()
+            e.target.previousElementSibling.focus();
             this.videoSearchError = data.errorMessage;
             this.videoData = null;
             this.filteredCaptions = null;
@@ -46,42 +46,50 @@ function videoSearch() {
             this.videoSearchError = null;
             this.videoFound = true;
             this.videoData = data.videoData;
-            this.filteredCaptions = data.videoData.captions
+            this.filteredCaptions = data.videoData.captions;
           }
-        })
+        });
     },
     filterCaptions() {
       // filter captions that have already been returned;
-      let filter = new RegExp(this.filterWord, "i");
-      this.filteredCaptions = this.videoData.captions.filter(line => line.text.match(filter));
+      let filter = new RegExp(this.filterWord, 'i');
+      this.filteredCaptions = this.videoData.captions.filter((line) =>
+        line.text.match(filter),
+      );
       this.hasFiltered = true;
       this.noMatch = this.filteredCaptions.length < 1;
       this.searchedFilterWord = this.filterWord;
-      console.log(this.filteredCaptions[0])
-      this.totalDuration = this.filteredCaptions.reduce((sum, cap) => sum + Number(cap.dur), 0)
+      console.log(this.filteredCaptions[0]);
+      this.totalDuration = this.filteredCaptions.reduce(
+        (sum, cap) => sum + Number(cap.dur),
+        0,
+      );
     },
 
     downloadVideo() {
       this.isLoading = true;
-      const body = { body: this.filteredCaptions }
+      const body = { body: this.filteredCaptions };
 
       // vsY0pdCW9N0
       // send the filtered captions to create the supercut;
       // TODO return a link to video download
-      const title = encodeURIComponent(this.videoData.videoTitle.replace(/\/\?/g, ''))
+      const title = encodeURIComponent(
+        this.videoData.videoTitle.replace(/[\W\s\/]/g, '-').toLowerCase(),
+      );
+
       fetch(`/download/${this.videoData.videoID}/${title}/${this.filterWord}`, {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           this.isLoading = false;
-          this.supercutSuccess = data.success
+          this.supercutSuccess = data.success;
           this.supercutURL = data.value;
-        })
-    }
-  }
+        });
+    },
+  };
 }
