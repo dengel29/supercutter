@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <title>Make Supercuts From YouTube Vids</title>
-     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"> 
     <link type="text/css" rel="stylesheet" href="/styles/styling.css">
     <link type="text/css" rel="stylesheet" href="/styles/loader.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet"> 
@@ -13,7 +13,11 @@
   <body>
     {% block  content %}
     {% endblock %}
+    {% include "../views/_partials/cookie-banner.njk" %}
+    {% include "../views/_partials/supercut-list.njk" %}
     <script src="/scripts/fetching.js"></script>
+    <script src="/scripts/cookie-check.js"></script>
+    <script src="/scripts/supercut-list.js"></script>
     <script src="/scripts/socket.js"></script>
     <script src="/scripts/scroller.js"></script>
   </body>
