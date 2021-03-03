@@ -13,8 +13,10 @@
   <body>
     {% block  content %}
     {% endblock %}
+    {% include "../views/_partials/cookie-banner.njk" %}
     {% include "../views/_partials/supercut-list.njk" %}
     <script src="/scripts/fetching.js"></script>
+    <script src="/scripts/cookie-check.js"></script>
     <script src="/scripts/supercut-list.js"></script>
     <script src="/scripts/socket.js"></script>
     <script src="/scripts/scroller.js"></script>

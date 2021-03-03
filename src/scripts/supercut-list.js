@@ -1,11 +1,13 @@
 let listContainer = document.getElementById('supercut-list');
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  let previousSupercuts = Object.keys(localStorage).map((k) =>
-    JSON.parse(localStorage[k]),
-  );
-  console.log(previousSupercuts);
-  previousSupercuts.forEach((el) => {
+  let cookies = Object.keys(localStorage).map((k) => {
+    return JSON.parse(localStorage[k]);
+  });
+
+  let supercuts = cookies.filter((item) => item['cookieType'] === 'supercut');
+
+  supercuts.forEach((el) => {
     let newListItem = document.createElement('li');
     newListItem.classList.add('center-row');
     let title = document.createElement('p');

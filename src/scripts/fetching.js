@@ -65,7 +65,6 @@ function videoSearch() {
         0,
       );
     },
-
     downloadVideo() {
       this.isLoading = true;
       const body = { body: this.filteredCaptions };
@@ -78,6 +77,7 @@ function videoSearch() {
         title: this.videoData.videoTitle,
         filter: this.filterWord,
         videoURL: `https://supercuts.s3.amazonaws.com/cuts-${title}-${this.filterWord}-supercut.mp4`,
+        cookieType: 'supercut',
       };
       window.localStorage.setItem(
         `${this.videoData.videoTitle}:${this.filterWord}`,
