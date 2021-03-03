@@ -70,11 +70,18 @@ function videoSearch() {
       this.isLoading = true;
       const body = { body: this.filteredCaptions };
 
-      // vsY0pdCW9N0
       // send the filtered captions to create the supercut;
-      // TODO return a link to video download
       const title = encodeURIComponent(
         this.videoData.videoTitle.replace(/[\W\s\/]/g, '-').toLowerCase(),
+      );
+      var supercutObject = {
+        title: this.videoData.videoTitle,
+        filter: this.filterWord,
+        videoURL: `https://supercuts.s3.amazonaws.com/cuts-${title}-${this.filterWord}-supercut.mp4`,
+      };
+      window.localStorage.setItem(
+        `${this.videoData.videoTitle}:${this.filterWord}`,
+        JSON.stringify(supercutObject),
       );
 
       fetch(`/download/${this.videoData.videoID}/${title}/${this.filterWord}`, {
