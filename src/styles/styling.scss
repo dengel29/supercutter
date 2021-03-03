@@ -119,6 +119,7 @@ h3 {
     // text-underline-offset: 19px;
     margin-bottom: 2px;
     padding-bottom: 3px;
+    font-size: 2em;
     border-bottom: 7px solid hsl(312, 100%, 50%);
   }
 
@@ -375,11 +376,6 @@ button#start-over {
 
 summary {
   cursor: pointer;
-}
-
-h3 {
-  font-size: 2.5em;
-  // text-align: center;
 }
 
 .content-grid {

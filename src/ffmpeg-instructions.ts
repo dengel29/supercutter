@@ -51,7 +51,7 @@ export default function createFFMPEGInstructions(lines: CCBlock[], keyword: stri
     audioCutInstructions = audioCutInstructions.concat(timesString)
 
   }
-  videoCutInstructions = videoCutInstructions.slice(0, -1).concat('\', setpts=N/FRAME_RATE/TB');
+  videoCutInstructions = videoCutInstructions.slice(0, -1).concat('\', setpts=\'N/FRAME_RATE/TB\'');
   audioCutInstructions = audioCutInstructions.slice(0, -1).concat('\', asetpts=\'N/SR/TB\'');
   return {
     videoCutInstructions: videoCutInstructions, 
