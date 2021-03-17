@@ -45,6 +45,7 @@ const io = new Server(httpServer, {
 app.use(express.static(path.join('build', 'src')));
 app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
 app.use('/styles', express.static(path.join(__dirname, 'styles')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(express.urlencoded({
   extended: true
 }))
