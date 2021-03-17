@@ -21,9 +21,10 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   const vs: VideoRequestString = {videoID: videoID, lang: lang}
   const decodedData = await getDecodedVideoInfo(vs.videoID)
   // ensure the decoded data has the captionTracks info
-  // console.log(decodedData)
+  
   //// title
-  const titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
+  console.log(decodedData)
+  const titleRegex = /(?="title":{"simpleText":).*(?=\"},)/;
   const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
   const uploadDateRegex = /\d\d\d\d-\d\d-\d\d/;
   const uploadDate = uploadDateRegex.exec(decodedData)[0]
@@ -54,6 +55,7 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match]: RegExpExecArray = regex.exec(decodedData);
   // console.log(decodedData)
+  console.log(match)
   const { captionTracks } = JSON.parse(`${match}}`);
   const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
   // * ensure we have found the correct vidData lang

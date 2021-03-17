@@ -44,6 +44,7 @@
   },
   "author": "Dan Engel",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "aws-sdk": "^2.818.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",

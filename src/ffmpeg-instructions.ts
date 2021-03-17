@@ -52,6 +52,7 @@ export default function createFFMPEGInstructions(lines: CCBlock[], keyword: stri
 
   }
   videoCutInstructions = videoCutInstructions.slice(0, -1).concat('\', setpts=\'N/FRAME_RATE/TB\'');
+  console.log(videoCutInstructions)
   audioCutInstructions = audioCutInstructions.slice(0, -1).concat('\', asetpts=\'N/SR/TB\'');
   return {
     videoCutInstructions: videoCutInstructions, 

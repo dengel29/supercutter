@@ -8,9 +8,11 @@ import bodyParser from 'body-parser';
 
 // 3rd party packages
 import ytdl from 'ytdl-core';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 import {Server } from 'socket.io';
 import http from 'http';
+const ffmpegPath = ffmpegInstaller.path
 
 // my modules
 import uploadToS3 from './upload-s3';
@@ -67,6 +69,7 @@ app.post('/search-video/:videoURLOrID', async (req,res) => {
   try {
     const videoID: string = ytdl.getVideoID(userInput)
     const videoData = await getVideoData(videoID, 'en')
+    console.log(videoData)
     res.send(JSON.stringify({videoData: videoData}))
   } catch(err) {
     if (err.message == `No video id found: ${userInput}`) {
@@ -141,6 +144,7 @@ async function cutVideo(videoPath: string, permPath: string, videoCutInstruction
   try {
     return new Promise<void>( (resolve, reject)  => {
       ffmpeg(videoPath)
+        .setFfmpegPath(ffmpegPath)
         .outputOptions(
           "-vf", `${videoCutInstructions}`, 
           "-af", `${audioCutInstructions}`
