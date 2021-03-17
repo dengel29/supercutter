@@ -24,7 +24,7 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   
   //// title
   console.log(decodedData)
-  const titleRegex = /(?="title":{"simpleText":).*(?=\"},)/;
+  let titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
   const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
   const uploadDateRegex = /\d\d\d\d-\d\d-\d\d/;
   const uploadDate = uploadDateRegex.exec(decodedData)[0]
@@ -36,6 +36,8 @@ export default async function getVideoData(videoID: string, lang: string): Promi
       throw new Error(`Could not find captions for video: ${videoTitle}. It was only uploaded in the past 10 days, so Google or the uploader might not have created subtitles for it. Try again in a few days, or try another video`)
     }
     throw new Error(`Could not find captions for video: ${videoTitle}`);
+  } else {
+    console.log("black hole")
   }
 
   /* captionTracks look like this: 
@@ -54,7 +56,6 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   // get caption tracks or throw an error
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match]: RegExpExecArray = regex.exec(decodedData);
-  // console.log(decodedData)
   console.log(match)
   const { captionTracks } = JSON.parse(`${match}}`);
   const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
