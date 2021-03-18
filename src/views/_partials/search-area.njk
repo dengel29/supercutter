@@ -14,13 +14,16 @@
           <label for="youtube-video">Enter a YouTube video URL: </label>
           <input 
             type="text" 
+            id="youtube-video"
             name="videoURLOrID"
             x-model="videoURLOrID"
             x-on:keydown.enter="searchYoutube">
           <button 
             type="submit"
+            aria-label="Search YouTube for Video"
             @click="searchYoutube"
             :disabled="isLoading || videoURLOrID == ''"
+            :aria-disabled="isLoading || videoURLOrID == ''"
             >
             Find
           </button>
@@ -57,7 +60,7 @@
           x-transition:enter-end="slide-end"
           class="next-step"> 
           <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ffa1ec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-          <button id="to-filter">Next step</button>
+          <button id="to-filter" aria-label="Jump to next step">Next step</button>
         </div>
       </div>
     </div>
@@ -77,13 +80,16 @@
         <label for="search-term">What word do you want to supercut</label>
           <input 
             type="text"
+            id="search-term"
             name="filterWord"
             x-model="filterWord"
             x-on:keydown.enter="filterCaptions">
           <button 
             type="submit"
+            aria-label="Filter captions"
             @click="filterCaptions"
             :disabled="!videoFound"
+            :aria-disabled="!videoFound"
             >Filter</button>        
       </div>
       <div class="result-group">
@@ -143,7 +149,7 @@
       x-transition:enter-end="slide-end"
       class="next-step">
       <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ffa1ec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-      <button id="to-supercut">Next step</button>
+      <button id="to-supercut" aria-label="Jump to final step">Next step</button>
     </div>
   </div>
   <div class="search-group" id="create-supercut" x-bind:class="{'disabled': !hasFiltered || noMatch}">
@@ -160,12 +166,15 @@
         <div class="center">
           <button
               name="create"
+              aria-label="Create super cut"
               @click="downloadVideo"
               :disabled="!hasFiltered || isLoading || !videoFound || filteredCaptions.length < 1"
+              :aria-disabled="!hasFiltered || isLoading || !videoFound || filteredCaptions.length < 1"
               >Create</button>
               <p>or</p>
           <button
             name="start-over"
+            aria-label="Jump to first step and start over"
             id="start-over"
             >Start over</button>
         </div>

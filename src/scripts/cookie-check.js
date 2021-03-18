@@ -2,7 +2,6 @@ function cookies() {
   return {
     hide: true,
     allowCookies() {
-      console.log('clicked');
       let cookie = {
         cookieType: 'cookieRequest',
         allow: 'true',
@@ -23,13 +22,12 @@ function cookies() {
         let cookies = Object.keys(localStorage).map((k) => {
           return JSON.parse(localStorage[k]);
         });
-        console.log(cookies);
+
         let acceptedCookieRequest = cookies.find(
           (item) => item['cookieType'] === 'cookieRequest',
         );
         if (acceptedCookieRequest) {
           this.hide = acceptedCookieRequest.allow === 'true';
-          console.log(this.hide);
         } else {
           this.hide = false;
         }

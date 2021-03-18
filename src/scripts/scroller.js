@@ -13,39 +13,15 @@ var inputs = [firstInput, filterInput, supercut];
 btns.forEach((btn, i) => {
   var inp = inputs[i];
   var scrollFunc = function () {
-    console.log('working scroll func');
     inp.scrollIntoView({ beahvior: 'smooth' });
   };
   btn.addEventListener('click', scrollFunc);
-  // alternate method for scrolling into view <- more janky? needs more testing
-  // const finalOffset = inp.getBoundingClientRect().top + scrollTop;
-  // btn.addEventListener('click', () => {
-  //   console.log(finalOffset);
-  //   window.scrollTo({
-  //     top: finalOffset,
-  //     behavior: 'auto',
-  //   });
-  // });
 });
 
 var scrollToFirstInput = function () {
   var firstInput = document.getElementById('find-video');
   firstInput.scrollIntoView({ behavior: 'smooth' });
 };
-
-// var scrollToFilterInput = function() {
-//     var filterInput = document.getElementById("filter-subs")
-//     filterInput.scrollIntoView({behavior: "smooth"})
-// }
-
-// var scrollToSupercut = function() {
-//     var supercut = document.getElementById("create-supercut")
-//     supercut.scrollIntoView({behavior: "smooth"})
-// }
-
-// getStartedBtn.addEventListener("click", scrollToFirstInput)
-// toFilterBtn.addEventListener("click", scrollToFilterInput)
-// toSupercutBtn.addEventListener("click", scrollToSupercut)
 
 const sections = document.querySelectorAll('.search-group');
 const ioConfig = {
@@ -72,8 +48,6 @@ const observer = new IntersectionObserver((entries) => {
       }
 
       observer.unobserve(entry.target);
-    } else {
-      console.log('out of view');
     }
   });
 }, ioConfig);

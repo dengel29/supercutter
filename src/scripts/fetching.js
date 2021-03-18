@@ -18,7 +18,6 @@ function videoSearch() {
     hasFiltered: false,
     totalDuration: 0,
     searchYoutube(e) {
-      console.log('working');
       // send the ID or URL to see if the video exists;
       // returns to client subtitles if it does exist;
       // returns an error message if it does not exist;
@@ -59,7 +58,6 @@ function videoSearch() {
       this.hasFiltered = true;
       this.noMatch = this.filteredCaptions.length < 1;
       this.searchedFilterWord = this.filterWord;
-      console.log(this.filteredCaptions[0]);
       this.totalDuration = this.filteredCaptions.reduce(
         (sum, cap) => sum + Number(cap.dur),
         0,
