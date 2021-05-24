@@ -25,14 +25,12 @@ var scrollToFirstInput = function () {
 
 const sections = document.querySelectorAll('.search-group');
 const ioConfig = {
-  // root: document.body,
   rootMargin: '-1px',
   threshold: 0.1,
 };
 let currentRatio = null;
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
-    console.table(entry.target.id, entry.intersectionRatio);
     if (
       entry.intersectionRatio > 0 &&
       !entry.target.classList.contains('disabled')
@@ -55,34 +53,3 @@ const observer = new IntersectionObserver((entries) => {
 sections.forEach((section) => {
   observer.observe(section);
 });
-
-// // scroll indicator
-// function scrollHandler(element = null) {
-// 	return {
-// 		height: 0,
-// 		element: element,
-// 		calculateHeight(position) {
-// 			const distanceFromTop = this.element.offsetTop
-// 			const contentHeight = this.element.clientHeight
-// 			const visibleContent = contentHeight - window.innerHeight
-// 			const start = Math.max(0, position - distanceFromTop)
-// 			const percent = (start / visibleContent) * 100;
-// 			requestAnimationFrame(() => {
-// 				this.height = percent;
-// 			});
-// 		},
-// 		init() {
-// 			this.element = this.element || document.body;
-// 			this.calculateHeight(window.scrollY);
-// 		}
-// 	};
-// }
-
-// var swap = function() {
-//  var vcr = document.querySelector('.highlighted') ; vcr.classList.remove('highlighted');
-//  var sib = vcr.nextElementSibling
-//   if (sib !== null) {sib.classList.add('highlighted')  }
-//   else {    document.querySelector('p').classList.add('highlighted')
-//   }
-// }
-//  setInterval(function(){ swap(); }, 1500);

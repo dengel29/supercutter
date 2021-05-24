@@ -6,9 +6,10 @@ async function getDecodedVideoInfo(url:string): Promise<string> {
   let msg;
   try {
     const { data } = await axios.get(
-    `https://youtube.com/get_video_info?video_id=${url}`
+    `https://youtube.com/get_video_info?html5=1&video_id=${url}`
     );
     msg = decodeURIComponent(data);
+    console.log(msg)
     
   } catch(e) {
     msg = "There was an error decoding the video data. Try again."
@@ -21,13 +22,22 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   const vs: VideoRequestString = {videoID: videoID, lang: lang}
   const decodedData = await getDecodedVideoInfo(vs.videoID)
   // ensure the decoded data has the captionTracks info
-  
-  //// title
   console.log(decodedData)
-  let titleRegex = /(?="title":{"simpleText":).*(?=},"description")/;
-  const videoTitle = titleRegex.exec(decodedData)[0].replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
-  const uploadDateRegex = /\d\d\d\d-\d\d-\d\d/;
+  //// title
+  let titleRegex = /(?="title":{"simpleText":).+?(?=},)/;
+  let videoTitle = titleRegex.exec(decodedData)[0]
+  console.log(videoTitle)
+  if (!videoTitle) {
+    throw new Error('error parsing video title')
+  }
+  videoTitle = videoTitle.replace(`"title":{"simpleText":`, '').replace(/\+/g, ' ').replace(/"/g, '')
+  console.log(videoTitle)
+  let uploadDateRegex = /\d\d\d\d-\d\d-\d\d/;
   const uploadDate = uploadDateRegex.exec(decodedData)[0]
+  if (!uploadDate) {
+    throw new Error('error parsing date')
+  }
+  console.log(uploadDate)
   // console.log(uploadDate)
   if (!decodedData.includes('captionTracks')) {
     let uploadedTime: number = Math.round(((new Date().getTime() - new Date(uploadDate).getTime()) / 86400000))
@@ -35,10 +45,11 @@ export default async function getVideoData(videoID: string, lang: string): Promi
     if (uploadedTime < 10) {
       throw new Error(`Could not find captions for video: ${videoTitle}. It was only uploaded in the past 10 days, so Google or the uploader might not have created subtitles for it. Try again in a few days, or try another video`)
     }
+    if(!decodedData) {
+      throw new Error('An error has on the server, if this is happening with multiple videos please contact support at im@dan-engel.fyi')
+    }
     throw new Error(`Could not find captions for video: ${videoTitle}`);
-  } else {
-    console.log("black hole")
-  }
+  } 
 
   /* captionTracks look like this: 
     captionTracks looks like this
@@ -60,7 +71,6 @@ export default async function getVideoData(videoID: string, lang: string): Promi
   const { captionTracks } = JSON.parse(`${match}}`);
   const vidData = captionTracks.find( ({ vssId })  => vssId === `.${vs.lang}` || vssId === `a.${vs.lang}` || vssId && vssId.match(`.${vs.lang}`))
   // * ensure we have found the correct vidData lang
-  console.log("video data", vidData)
   if (!vidData || (vidData && !vidData.baseUrl))
     throw new Error(`Could not find ${vs.lang} captions for ${vs.videoID}`);
 
@@ -76,7 +86,6 @@ export default async function getVideoData(videoID: string, lang: string): Promi
 
   // convert XML transcript into an array of CCBlocks
   const lines: Array<CCBlock> = await getTranscript(vidData.baseUrl)
-  console.log(lines)
   return {
     title: 'Subs for your video',
     videoTitle: videoTitle,
